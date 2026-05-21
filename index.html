@@ -215,12 +215,12 @@
   // ============================================================
   const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const MATCH_LABEL  = 'Pondělí 17:30';
+  
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  document.getElementById('match-label').textContent = MATCH_LABEL;
+  
 
   function nextMonday2300() {
     const now = new Date();
