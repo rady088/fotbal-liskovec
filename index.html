@@ -52,7 +52,6 @@
       padding: 1.25rem;
     }
 
-    /* Dvousloupcový layout */
     .main-layout {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -72,7 +71,7 @@
       margin-bottom: 8px;
     }
 
-    select, input[type="text"] {
+    select, input[type="text"], input[type="password"] {
       width: 100%;
       padding: 10px 12px;
       border: 0.5px solid var(--border);
@@ -155,28 +154,14 @@
     .flash.ok  { background: var(--green-light); color: var(--green); }
     .flash.err { background: var(--red-light);   color: var(--red); }
 
-    .empty {
-      text-align: center; padding: 1.5rem;
-      color: var(--text-muted); font-size: 13px;
-    }
-
+    .empty { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 13px; }
     .loading { text-align: center; padding: 1rem; color: var(--text-muted); font-size: 13px; }
 
-    .next-reset {
-      font-size: 12px; color: var(--text-muted);
-      text-align: center; margin-top: .75rem;
-    }
+    .next-reset { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: .75rem; }
+    .match-info-bar { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; padding: 0 .25rem; }
 
-    .match-info-bar {
-      font-size: 13px; color: var(--text-muted);
-      margin-bottom: 1rem; padding: 0 .25rem;
-    }
-
-    .admin-bar {
-      margin-top: 1rem;
-      display: flex; align-items: center; gap: 8px;
-      justify-content: flex-end;
-    }
+    /* ADMIN */
+    .admin-bar { margin-top: 1rem; display: flex; justify-content: flex-end; }
     .btn-admin-toggle {
       background: none; border: none;
       font-size: 12px; color: var(--text-muted);
@@ -195,41 +180,54 @@
     }
     .admin-panel.open { display: block; }
 
-    .pin-row {
-      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
-    }
-    .pin-row input[type="password"] {
-      width: 110px; margin-bottom: 0;
-      letter-spacing: .2em; text-align: center; font-size: 16px;
-    }
-    .btn-pin {
-      padding: 9px 14px;
+    .pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .pin-row input { width: 110px; margin-bottom: 0; letter-spacing: .2em; text-align: center; font-size: 16px; }
+
+    .btn-sm {
+      padding: 8px 13px;
       background: var(--surface); color: var(--text);
       border: 0.5px solid var(--border); border-radius: var(--radius-sm);
       font-size: 13px; cursor: pointer; white-space: nowrap;
     }
-    .btn-pin:hover { background: var(--green-light); color: var(--green); }
+    .btn-sm:hover { background: var(--green-light); color: var(--green); }
 
     .btn-reset {
       width: 100%; padding: 11px;
       background: var(--red-light); color: var(--red);
       border: 0.5px solid rgba(192,57,43,0.2); border-radius: var(--radius-sm);
-      font-size: 14px; font-weight: 600; cursor: pointer;
+      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px;
     }
-    .btn-reset:hover { background: #f5c0c0; }
+    .btn-reset:hover { filter: brightness(0.95); }
     .btn-reset:active { transform: scale(0.98); }
 
-    .pin-error {
-      font-size: 12px; color: var(--red); margin-bottom: 8px; display: none;
-    }
+    .pin-error { font-size: 12px; color: var(--red); margin-bottom: 8px; display: none; }
     .pin-error.show { display: block; }
+
+    .admin-divider { height: .5px; background: var(--border); margin: 12px 0; }
+
+    .admin-player-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border);
+      margin-bottom: 4px;
+      background: var(--surface);
+      font-size: 13px;
+    }
+    .btn-remove {
+      background: none; border: none; color: var(--text-muted);
+      font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
+    }
+    .btn-remove:hover { color: var(--red); }
+
+    .add-row { display: flex; gap: 6px; margin-bottom: 8px; }
+    .add-row input { flex: 1; margin-bottom: 0; }
   </style>
 </head>
 <body>
 <div class="container">
 
   <div id="flash" class="flash"></div>
-
   <p class="match-info-bar" id="match-label"></p>
 
   <div class="main-layout">
@@ -245,7 +243,7 @@
       <button class="btn-nogo" onclick="respond(false)">✕ Nejdu</button>
     </div>
 
-    <!-- PRAVÝ SLOUPEC: přehled hráčů -->
+    <!-- PRAVÝ SLOUPEC: přehled -->
     <div class="card">
       <div class="section-label">Přehled hráčů</div>
       <div class="metrics">
@@ -257,17 +255,39 @@
       <div id="rsvp-list"><div class="loading">Načítám…</div></div>
       <div class="next-reset" id="next-reset"></div>
 
+      <!-- ADMIN -->
       <div class="admin-bar">
         <button class="btn-admin-toggle" onclick="toggleAdminPanel()" id="admin-toggle-btn">🔒 Admin</button>
       </div>
       <div class="admin-panel" id="admin-panel">
-        <div class="section-label" style="margin-bottom:10px">Admin — reset přihlášení</div>
+        <div class="section-label" style="margin-bottom:10px">Admin</div>
+
+        <!-- PIN -->
         <div class="pin-row">
-          <input type="password" id="admin-pin" maxlength="6" placeholder="PIN" oninput="onPinInput()" />
-          <button class="btn-pin" onclick="unlockAdmin()">Odemknout</button>
+          <input type="password" id="admin-pin" maxlength="6" placeholder="PIN" oninput="document.getElementById('pin-error').classList.remove('show')" />
+          <button class="btn-sm" id="btn-unlock" onclick="unlockAdmin()">Odemknout</button>
         </div>
         <div class="pin-error" id="pin-error">Špatný PIN</div>
-        <button class="btn-reset" id="btn-reset" onclick="adminReset()" style="display:none">🗑 Resetovat všechna přihlášení</button>
+
+        <!-- Po odemčení -->
+        <div id="admin-actions" style="display:none">
+
+          <!-- Přidat hráče -->
+          <div class="section-label">Přidat hráče</div>
+          <div class="add-row">
+            <input type="text" id="new-player-input" placeholder="Jméno…" onkeydown="if(event.key==='Enter')adminAddPlayer()" />
+            <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
+          </div>
+
+          <!-- Seznam hráčů -->
+          <div class="section-label" style="margin-bottom:6px">Spravovat hráče</div>
+          <div id="admin-players-list"><div class="loading">Načítám…</div></div>
+
+          <div class="admin-divider"></div>
+
+          <!-- Reset přihlášení -->
+          <button class="btn-reset" onclick="adminReset()">🗑 Resetovat všechna přihlášení</button>
+        </div>
       </div>
     </div>
 
@@ -276,7 +296,7 @@
 
 <script>
   // ============================================================
-  // KONFIGURACE — vyplň po vytvoření projektu v Supabase
+  // KONFIGURACE
   // ============================================================
   const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
@@ -284,8 +304,9 @@
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+ 
 
-  
+  // Příští reset
   function nextMonday2300() {
     const now = new Date();
     const prague = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Prague' }));
@@ -301,6 +322,7 @@
     'Přihlášení se resetuje v pondělí ' +
     nr.toLocaleDateString('cs-CZ', { day:'numeric', month:'numeric' }) + ' ve 23:00';
 
+  // Načti hráče do selectu
   async function loadPlayers() {
     const { data } = await sb.from('players').select('name').order('name');
     const sel = document.getElementById('player-select');
@@ -312,28 +334,22 @@
     });
   }
 
+  // Načti přehled odpovědí
   async function loadRsvp() {
     const { data } = await sb
-      .from('rsvp')
-      .select('player_name, going')
+      .from('rsvp').select('player_name, going')
       .order('updated_at', { ascending: false });
-
     const rows  = data || [];
     const go    = rows.filter(r => r.going);
     const nogo  = rows.filter(r => !r.going);
     const total = rows.length;
-
     document.getElementById('cnt-total').textContent = total;
     document.getElementById('cnt-go').textContent    = go.length;
     document.getElementById('cnt-nogo').textContent  = nogo.length;
     const pct = total > 0 ? Math.round(go.length / total * 100) : 0;
     document.getElementById('bar-fill').style.width  = pct + '%';
-
     const list = document.getElementById('rsvp-list');
-    if (!rows.length) {
-      list.innerHTML = '<div class="empty">Zatím žádné odpovědi</div>';
-      return;
-    }
+    if (!rows.length) { list.innerHTML = '<div class="empty">Zatím žádné odpovědi</div>'; return; }
     list.innerHTML = [...go, ...nogo].map(r =>
       `<div class="player-row">
         <span class="player-name">${esc(r.player_name)}</span>
@@ -342,13 +358,11 @@
     ).join('');
   }
 
+  // Odpověď hráče
   async function respond(going) {
     const name = document.getElementById('player-select').value ||
                  document.getElementById('player-new').value.trim();
-    if (!name) {
-      flash('Nejdřív vyber nebo napiš své jméno.', false);
-      return;
-    }
+    if (!name) { flash('Nejdřív vyber nebo napiš své jméno.', false); return; }
     await sb.from('players').upsert({ name }, { onConflict: 'name', ignoreDuplicates: true });
     const { error } = await sb.from('rsvp').upsert(
       { player_name: name, going, updated_at: new Date().toISOString() },
@@ -373,11 +387,13 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  // Realtime
   sb.channel('rsvp-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'rsvp' }, loadRsvp)
     .subscribe();
 
-  // --- ADMIN ---
+  // ---- ADMIN ----
+
   function toggleAdminPanel() {
     const panel = document.getElementById('admin-panel');
     const isOpen = panel.classList.toggle('open');
@@ -385,18 +401,15 @@
     if (!isOpen) lockAdmin();
   }
 
-  function onPinInput() {
-    document.getElementById('pin-error').classList.remove('show');
-  }
-
   function unlockAdmin() {
     const pin = document.getElementById('admin-pin').value;
     if (pin === ADMIN_PIN) {
-      document.getElementById('btn-reset').style.display = 'block';
+      document.getElementById('admin-actions').style.display = 'block';
       document.getElementById('admin-pin').disabled = true;
+      document.getElementById('btn-unlock').textContent = '✓ Odemčeno';
+      document.getElementById('btn-unlock').style.color = 'var(--green)';
       document.getElementById('pin-error').classList.remove('show');
-      document.querySelector('.btn-pin').textContent = '✓ Odemčeno';
-      document.querySelector('.btn-pin').style.color = 'var(--green)';
+      loadAdminPlayers();
     } else {
       document.getElementById('pin-error').classList.add('show');
       document.getElementById('admin-pin').value = '';
@@ -404,14 +417,52 @@
   }
 
   function lockAdmin() {
-    document.getElementById('btn-reset').style.display = 'none';
+    document.getElementById('admin-actions').style.display = 'none';
     document.getElementById('admin-pin').disabled = false;
     document.getElementById('admin-pin').value = '';
+    document.getElementById('btn-unlock').textContent = 'Odemknout';
+    document.getElementById('btn-unlock').style.color = '';
     document.getElementById('pin-error').classList.remove('show');
-    document.querySelector('.btn-pin').textContent = 'Odemknout';
-    document.querySelector('.btn-pin').style.color = '';
+    document.getElementById('new-player-input').value = '';
   }
 
+  // Načti seznam hráčů v admin panelu
+  async function loadAdminPlayers() {
+    const { data } = await sb.from('players').select('name').order('name');
+    const list = document.getElementById('admin-players-list');
+    if (!data || !data.length) { list.innerHTML = '<div class="empty">Žádní hráči</div>'; return; }
+    list.innerHTML = data.map(p =>
+      `<div class="admin-player-row">
+        <span>${esc(p.name)}</span>
+        <button class="btn-remove" onclick="adminRemovePlayer('${esc(p.name)}')" title="Odebrat">✕</button>
+      </div>`
+    ).join('');
+  }
+
+  // Přidat hráče
+  async function adminAddPlayer() {
+    const name = document.getElementById('new-player-input').value.trim();
+    if (!name) return;
+    const { error } = await sb.from('players').insert({ name });
+    if (error) { flash('Hráč již existuje nebo chyba: ' + error.message, false); return; }
+    document.getElementById('new-player-input').value = '';
+    flash(`Hráč ${name} přidán.`, true);
+    await loadAdminPlayers();
+    await loadPlayers();
+  }
+
+  // Odebrat hráče (smaže i jeho přihlášení přes CASCADE)
+  async function adminRemovePlayer(name) {
+    if (!confirm(`Odebrat hráče "${name}"? Smaže se i jeho přihlášení.`)) return;
+    const { error } = await sb.from('players').delete().eq('name', name);
+    if (error) { flash('Chyba: ' + error.message, false); return; }
+    flash(`Hráč ${name} odebrán.`, true);
+    await loadAdminPlayers();
+    await loadPlayers();
+    await loadRsvp();
+  }
+
+  // Reset přihlášení
   async function adminReset() {
     if (!confirm('Opravdu smazat všechna přihlášení?')) return;
     const { error } = await sb.from('rsvp').delete().neq('player_name', '___placeholder___');
