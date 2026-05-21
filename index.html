@@ -43,23 +43,24 @@
       padding-bottom: 2rem;
     }
 
-    .container { max-width: 480px; margin: 0 auto; padding: 1rem; }
-
-    .club-header {
-      background: var(--green);
-      border-radius: var(--radius);
-      padding: 1.25rem 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .club-header h1 { color: #fff; font-size: 22px; font-weight: 600; }
-    .club-header p  { color: rgba(255,255,255,0.65); font-size: 13px; margin-top: 2px; }
+    .container { max-width: 900px; margin: 0 auto; padding: 1rem; }
 
     .card {
       background: var(--surface);
       border: 0.5px solid var(--border);
       border-radius: var(--radius);
       padding: 1.25rem;
-      margin-bottom: 1rem;
+    }
+
+    /* Dvousloupcový layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    @media (max-width: 600px) {
+      .main-layout { grid-template-columns: 1fr; }
     }
 
     .section-label {
@@ -113,11 +114,11 @@
     .metric {
       background: var(--bg);
       border-radius: var(--radius-sm);
-      padding: .85rem .5rem; text-align: center;
+      padding: .75rem .5rem; text-align: center;
     }
-    .metric .num { font-size: 26px; font-weight: 600; line-height: 1; }
+    .metric .num { font-size: 22px; font-weight: 600; line-height: 1; }
     .metric .lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-    .go-color  { color: var(--green); }
+    .go-color   { color: var(--green); }
     .nogo-color { color: var(--red); }
 
     .bar-wrap {
@@ -132,20 +133,18 @@
     .player-row {
       display: flex; align-items: center;
       justify-content: space-between;
-      padding: 9px 10px;
+      padding: 7px 10px;
       border-radius: var(--radius-sm);
       border: 0.5px solid var(--border);
       margin-bottom: 5px;
     }
-    .player-name { font-weight: 500; font-size: 14px; }
+    .player-name { font-weight: 500; font-size: 13px; }
     .badge {
-      font-size: 11px; padding: 3px 10px;
+      font-size: 11px; padding: 3px 9px;
       border-radius: 20px; font-weight: 600;
     }
     .badge-go   { background: var(--green-light); color: var(--green); }
     .badge-nogo { background: var(--red-light);   color: var(--red); }
-
-    .divider { height: 0.5px; background: var(--border); margin: 1rem 0; }
 
     .flash {
       border-radius: var(--radius-sm);
@@ -157,7 +156,7 @@
     .flash.err { background: var(--red-light);   color: var(--red); }
 
     .empty {
-      text-align: center; padding: 2rem;
+      text-align: center; padding: 1.5rem;
       color: var(--text-muted); font-size: 13px;
     }
 
@@ -165,68 +164,68 @@
 
     .next-reset {
       font-size: 12px; color: var(--text-muted);
-      text-align: center; margin-top: .5rem;
+      text-align: center; margin-top: .75rem;
+    }
+
+    .match-info-bar {
+      font-size: 13px; color: var(--text-muted);
+      margin-bottom: 1rem; padding: 0 .25rem;
     }
   </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="club-header">
-    <h1>⚽ Fotbal Lískovec</h1>
-    <p id="match-label">Načítám informace o zápase…</p>
-  </div>
-
   <div id="flash" class="flash"></div>
 
-  <!-- PŘIHLAŠOVACÍ KARTA -->
-  <div class="card" id="form-card">
-    <div class="section-label">Tvoje jméno</div>
-    <select id="player-select">
-      <option value="">— vyber své jméno —</option>
-    </select>
-    <input type="text" id="player-new" placeholder="Nebo napiš nové jméno…" />
+  <p class="match-info-bar" id="match-label"></p>
 
-    <div style="margin-top:4px">
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Přijdeš na zápas?</p>
+  <div class="main-layout">
+
+    <!-- LEVÝ SLOUPEC: formulář -->
+    <div class="card" id="form-card">
+      <div class="section-label">Hráč</div>
+      <select id="player-select">
+        <option value="">— vyber své jméno —</option>
+      </select>
+      <input type="text" id="player-new" placeholder="Nebo napiš nové jméno…" />
       <button class="btn-go"   onclick="respond(true)">✓ Jdu!</button>
       <button class="btn-nogo" onclick="respond(false)">✕ Nejdu</button>
     </div>
-  </div>
 
-  <!-- PŘEHLED -->
-  <div class="card">
-    <div class="section-label">Přehled odpovědí</div>
-    <div class="metrics">
-      <div class="metric"><div class="num"           id="cnt-total">–</div><div class="lbl">celkem</div></div>
-      <div class="metric"><div class="num go-color"  id="cnt-go">–</div><div class="lbl">jdou</div></div>
-      <div class="metric"><div class="num nogo-color" id="cnt-nogo">–</div><div class="lbl">nejdou</div></div>
+    <!-- PRAVÝ SLOUPEC: přehled hráčů -->
+    <div class="card">
+      <div class="section-label">Přehled hráčů</div>
+      <div class="metrics">
+        <div class="metric"><div class="num"            id="cnt-total">–</div><div class="lbl">celkem</div></div>
+        <div class="metric"><div class="num go-color"   id="cnt-go">–</div><div class="lbl">jdou</div></div>
+        <div class="metric"><div class="num nogo-color" id="cnt-nogo">–</div><div class="lbl">nejdou</div></div>
+      </div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+      <div id="rsvp-list"><div class="loading">Načítám…</div></div>
+      <div class="next-reset" id="next-reset"></div>
     </div>
-    <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
-    <div id="rsvp-list"><div class="loading">Načítám…</div></div>
-    <div class="next-reset" id="next-reset"></div>
-  </div>
 
+  </div>
 </div>
 
 <script>
   // ============================================================
   // KONFIGURACE — vyplň po vytvoření projektu v Supabase
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';      // např. https://xyzxyz.supabase.co
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m'; // anon/public klíč z Supabase
-  const MATCH_LABEL  = 'Pondeli 17:30 Hřiště Liskovec'; // text pod názvem klubu
+  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
+  const MATCH_LABEL  = 'Pondělí 17:30';
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   document.getElementById('match-label').textContent = MATCH_LABEL;
 
-  // Zobraz čas příštího resetu (pondělí 23:00 Praha)
   function nextMonday2300() {
     const now = new Date();
     const prague = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Prague' }));
-    const day = prague.getDay(); // 0=ne,1=po,...
+    const day = prague.getDay();
     const daysUntil = day === 1 ? 7 : (8 - day) % 7;
     const next = new Date(prague);
     next.setDate(prague.getDate() + daysUntil);
@@ -238,7 +237,6 @@
     'Přihlášení se resetuje v pondělí ' +
     nr.toLocaleDateString('cs-CZ', { day:'numeric', month:'numeric' }) + ' ve 23:00';
 
-  // Načti hráče do selectu
   async function loadPlayers() {
     const { data } = await sb.from('players').select('name').order('name');
     const sel = document.getElementById('player-select');
@@ -250,16 +248,15 @@
     });
   }
 
-  // Načti a zobraz odpovědi
   async function loadRsvp() {
     const { data } = await sb
       .from('rsvp')
       .select('player_name, going')
       .order('updated_at', { ascending: false });
 
-    const rows = data || [];
-    const go   = rows.filter(r => r.going);
-    const nogo = rows.filter(r => !r.going);
+    const rows  = data || [];
+    const go    = rows.filter(r => r.going);
+    const nogo  = rows.filter(r => !r.going);
     const total = rows.length;
 
     document.getElementById('cnt-total').textContent = total;
@@ -281,7 +278,6 @@
     ).join('');
   }
 
-  // Odešli odpověď
   async function respond(going) {
     const name = document.getElementById('player-select').value ||
                  document.getElementById('player-new').value.trim();
@@ -289,21 +285,12 @@
       flash('Nejdřív vyber nebo napiš své jméno.', false);
       return;
     }
-
-    // Ulož hráče pokud je nový
     await sb.from('players').upsert({ name }, { onConflict: 'name', ignoreDuplicates: true });
-
-    // Ulož odpověď (upsert = přepíše pokud už existuje)
     const { error } = await sb.from('rsvp').upsert(
       { player_name: name, going, updated_at: new Date().toISOString() },
       { onConflict: 'player_name' }
     );
-
-    if (error) {
-      flash('Chyba při ukládání. Zkus to znovu.', false);
-      return;
-    }
-
+    if (error) { flash('Chyba při ukládání. Zkus to znovu.', false); return; }
     flash(going ? `Super, ${name} — těšíme se! 👍` : `Škoda, ${name} — příště snad!`, going);
     document.getElementById('player-select').value = '';
     document.getElementById('player-new').value = '';
@@ -319,11 +306,9 @@
   }
 
   function esc(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  // Realtime aktualizace — ostatní hráči se zobrazí ihned
   sb.channel('rsvp-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'rsvp' }, loadRsvp)
     .subscribe();
