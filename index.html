@@ -300,11 +300,11 @@
   // ============================================================
   const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const ADMIN_PIN    = '1234'; // ← změň na svůj PIN
+  const ADMIN_PIN    = '1212'; // ← změň na svůj PIN
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
- 
+  
 
   // Příští reset
   function nextMonday2300() {
@@ -453,7 +453,6 @@
 
   // Odebrat hráče (smaže i jeho přihlášení přes CASCADE)
   async function adminRemovePlayer(name) {
-    if (!confirm(`Odebrat hráče "${name}"? Smaže se i jeho přihlášení.`)) return;
     const { error } = await sb.from('players').delete().eq('name', name);
     if (error) { flash('Chyba: ' + error.message, false); return; }
     flash(`Hráč ${name} odebrán.`, true);
@@ -464,7 +463,6 @@
 
   // Reset přihlášení
   async function adminReset() {
-    if (!confirm('Opravdu smazat všechna přihlášení?')) return;
     const { error } = await sb.from('rsvp').delete().neq('player_name', '___placeholder___');
     if (error) { flash('Chyba při resetování: ' + error.message, false); return; }
     flash('Přihlášení byla resetována.', true);
