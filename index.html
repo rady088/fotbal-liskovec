@@ -171,6 +171,58 @@
       font-size: 13px; color: var(--text-muted);
       margin-bottom: 1rem; padding: 0 .25rem;
     }
+
+    .admin-bar {
+      margin-top: 1rem;
+      display: flex; align-items: center; gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn-admin-toggle {
+      background: none; border: none;
+      font-size: 12px; color: var(--text-muted);
+      cursor: pointer; padding: 4px 6px;
+      border-radius: var(--radius-sm);
+    }
+    .btn-admin-toggle:hover { background: var(--bg); }
+
+    .admin-panel {
+      margin-top: .75rem;
+      padding: 1rem;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border);
+      display: none;
+    }
+    .admin-panel.open { display: block; }
+
+    .pin-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+    }
+    .pin-row input[type="password"] {
+      width: 110px; margin-bottom: 0;
+      letter-spacing: .2em; text-align: center; font-size: 16px;
+    }
+    .btn-pin {
+      padding: 9px 14px;
+      background: var(--surface); color: var(--text);
+      border: 0.5px solid var(--border); border-radius: var(--radius-sm);
+      font-size: 13px; cursor: pointer; white-space: nowrap;
+    }
+    .btn-pin:hover { background: var(--green-light); color: var(--green); }
+
+    .btn-reset {
+      width: 100%; padding: 11px;
+      background: var(--red-light); color: var(--red);
+      border: 0.5px solid rgba(192,57,43,0.2); border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+    .btn-reset:hover { background: #f5c0c0; }
+    .btn-reset:active { transform: scale(0.98); }
+
+    .pin-error {
+      font-size: 12px; color: var(--red); margin-bottom: 8px; display: none;
+    }
+    .pin-error.show { display: block; }
   </style>
 </head>
 <body>
@@ -204,6 +256,19 @@
       <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div id="rsvp-list"><div class="loading">Načítám…</div></div>
       <div class="next-reset" id="next-reset"></div>
+
+      <div class="admin-bar">
+        <button class="btn-admin-toggle" onclick="toggleAdminPanel()" id="admin-toggle-btn">🔒 Admin</button>
+      </div>
+      <div class="admin-panel" id="admin-panel">
+        <div class="section-label" style="margin-bottom:10px">Admin — reset přihlášení</div>
+        <div class="pin-row">
+          <input type="password" id="admin-pin" maxlength="6" placeholder="PIN" oninput="onPinInput()" />
+          <button class="btn-pin" onclick="unlockAdmin()">Odemknout</button>
+        </div>
+        <div class="pin-error" id="pin-error">Špatný PIN</div>
+        <button class="btn-reset" id="btn-reset" onclick="adminReset()" style="display:none">🗑 Resetovat všechna přihlášení</button>
+      </div>
     </div>
 
   </div>
@@ -213,15 +278,14 @@
   // ============================================================
   // KONFIGURACE — vyplň po vytvoření projektu v Supabase
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  
+  const SUPABASE_URL = 'DOPLŇ_SUPABASE_URL';
+  const SUPABASE_KEY = 'DOPLŇ_SUPABASE_ANON_KEY';
+  const ADMIN_PIN    = '1234'; // ← změň na svůj PIN
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   
-
   function nextMonday2300() {
     const now = new Date();
     const prague = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Prague' }));
@@ -312,6 +376,52 @@
   sb.channel('rsvp-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'rsvp' }, loadRsvp)
     .subscribe();
+
+  // --- ADMIN ---
+  function toggleAdminPanel() {
+    const panel = document.getElementById('admin-panel');
+    const isOpen = panel.classList.toggle('open');
+    document.getElementById('admin-toggle-btn').textContent = isOpen ? '✕ Zavřít' : '🔒 Admin';
+    if (!isOpen) lockAdmin();
+  }
+
+  function onPinInput() {
+    document.getElementById('pin-error').classList.remove('show');
+  }
+
+  function unlockAdmin() {
+    const pin = document.getElementById('admin-pin').value;
+    if (pin === ADMIN_PIN) {
+      document.getElementById('btn-reset').style.display = 'block';
+      document.getElementById('admin-pin').disabled = true;
+      document.getElementById('pin-error').classList.remove('show');
+      document.querySelector('.btn-pin').textContent = '✓ Odemčeno';
+      document.querySelector('.btn-pin').style.color = 'var(--green)';
+    } else {
+      document.getElementById('pin-error').classList.add('show');
+      document.getElementById('admin-pin').value = '';
+    }
+  }
+
+  function lockAdmin() {
+    document.getElementById('btn-reset').style.display = 'none';
+    document.getElementById('admin-pin').disabled = false;
+    document.getElementById('admin-pin').value = '';
+    document.getElementById('pin-error').classList.remove('show');
+    document.querySelector('.btn-pin').textContent = 'Odemknout';
+    document.querySelector('.btn-pin').style.color = '';
+  }
+
+  async function adminReset() {
+    if (!confirm('Opravdu smazat všechna přihlášení?')) return;
+    const { error } = await sb.from('rsvp').delete().neq('player_name', '___placeholder___');
+    if (error) { flash('Chyba při resetování: ' + error.message, false); return; }
+    flash('Přihlášení byla resetována.', true);
+    lockAdmin();
+    document.getElementById('admin-panel').classList.remove('open');
+    document.getElementById('admin-toggle-btn').textContent = '🔒 Admin';
+    await loadRsvp();
+  }
 
   loadPlayers();
   loadRsvp();
