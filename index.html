@@ -25,203 +25,80 @@
 
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1a1a18;
-        --surface: #242422;
+        --bg: #1a1a18; --surface: #242422;
         --border: rgba(255,255,255,0.1);
-        --text: #e8e8e4;
-        --text-muted: #9a9a94;
-        --green-light: #0d2e14;
-        --red-light: #2e0d0d;
+        --text: #e8e8e4; --text-muted: #9a9a94;
+        --green-light: #0d2e14; --red-light: #2e0d0d;
       }
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding-bottom: 2rem;
-    }
-
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 2rem; }
     .container { max-width: 900px; margin: 0 auto; padding: 1rem; }
+    .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .main-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+    @media (max-width: 600px) { .main-layout { grid-template-columns: 1fr; } }
 
-    .card {
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-    }
+    .section-label { font-size: 11px; font-weight: 600; color: var(--text-muted); letter-spacing: .07em; text-transform: uppercase; margin-bottom: 8px; }
 
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-      align-items: start;
-    }
-    @media (max-width: 600px) {
-      .main-layout { grid-template-columns: 1fr; }
-    }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--text-muted);
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    select, input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 10px 12px;
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-sm);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 15px;
-      font-family: inherit;
-      margin-bottom: 8px;
-      appearance: none;
-      -webkit-appearance: none;
+    select, input[type="text"], input[type="password"], input[type="datetime-local"] {
+      width: 100%; padding: 10px 12px; border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+      font-size: 15px; font-family: inherit; margin-bottom: 8px;
+      appearance: none; -webkit-appearance: none;
     }
     select:focus, input:focus { outline: 2px solid var(--green); outline-offset: 1px; }
 
-    .btn-go {
-      width: 100%; padding: 13px;
-      background: var(--green); color: #fff;
-      border: none; border-radius: var(--radius-sm);
-      font-size: 15px; font-weight: 600; cursor: pointer;
-      margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
+    .btn-go { width: 100%; padding: 13px; background: var(--green); color: #fff; border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-go:hover { background: var(--green-dark); }
-    .btn-go:active { transform: scale(0.98); }
-
-    .btn-nogo {
-      width: 100%; padding: 13px;
-      background: var(--surface); color: var(--text);
-      border: 0.5px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 15px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
+    .btn-nogo { width: 100%; padding: 13px; background: var(--surface); color: var(--text); border: 0.5px solid var(--border); border-radius: var(--radius-sm); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .btn-nogo:hover { background: var(--bg); }
-    .btn-nogo:active { transform: scale(0.98); }
 
-    .metrics {
-      display: grid; grid-template-columns: 1fr 1fr 1fr;
-      gap: 8px; margin-bottom: 1rem;
-    }
-    .metric {
-      background: var(--bg);
-      border-radius: var(--radius-sm);
-      padding: .75rem .5rem; text-align: center;
-    }
-    .metric .num { font-size: 22px; font-weight: 600; line-height: 1; }
-    .metric .lbl { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-    .go-color   { color: var(--green); }
-    .nogo-color { color: var(--red); }
+    /* Jen jedno velké počítadlo */
+    .single-metric { text-align: center; padding: .75rem .5rem 1rem; }
+    .single-metric .num { font-size: 48px; font-weight: 700; line-height: 1; color: var(--green); }
+    .single-metric .lbl { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
-    .bar-wrap {
-      height: 6px; background: var(--bg);
-      border-radius: 3px; overflow: hidden; margin-bottom: 1rem;
-    }
-    .bar-fill {
-      height: 100%; background: var(--green);
-      border-radius: 3px; transition: width .4s;
-    }
+    .bar-wrap { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 1rem; }
+    .bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s; }
 
-    .player-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 7px 10px;
-      border-radius: var(--radius-sm);
-      border: 0.5px solid var(--border);
-      margin-bottom: 5px;
-    }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); margin-bottom: 5px; }
     .player-name { font-weight: 500; font-size: 13px; }
-    .badge {
-      font-size: 11px; padding: 3px 9px;
-      border-radius: 20px; font-weight: 600;
-    }
+    .badge { font-size: 11px; padding: 3px 9px; border-radius: 20px; font-weight: 600; }
     .badge-go   { background: var(--green-light); color: var(--green); }
     .badge-nogo { background: var(--red-light);   color: var(--red); }
 
-    .flash {
-      border-radius: var(--radius-sm);
-      padding: 10px 14px; font-size: 13px;
-      margin-bottom: 1rem; display: none;
-    }
+    .flash { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 1rem; display: none; }
     .flash.show { display: block; }
     .flash.ok  { background: var(--green-light); color: var(--green); }
     .flash.err { background: var(--red-light);   color: var(--red); }
 
-    .empty { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 13px; }
-    .loading { text-align: center; padding: 1rem; color: var(--text-muted); font-size: 13px; }
+    .empty   { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 13px; }
+    .loading { text-align: center; padding: 1rem;   color: var(--text-muted); font-size: 13px; }
 
-    .next-reset { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: .75rem; }
+    .next-reset    { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: .75rem; }
     .match-info-bar { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; padding: 0 .25rem; }
 
     /* ADMIN */
     .admin-bar { margin-top: 1rem; display: flex; justify-content: flex-end; }
-    .btn-admin-toggle {
-      background: none; border: none;
-      font-size: 12px; color: var(--text-muted);
-      cursor: pointer; padding: 4px 6px;
-      border-radius: var(--radius-sm);
-    }
+    .btn-admin-toggle { background: none; border: none; font-size: 12px; color: var(--text-muted); cursor: pointer; padding: 4px 6px; border-radius: var(--radius-sm); }
     .btn-admin-toggle:hover { background: var(--bg); }
-
-    .admin-panel {
-      margin-top: .75rem;
-      padding: 1rem;
-      background: var(--bg);
-      border-radius: var(--radius-sm);
-      border: 0.5px solid var(--border);
-      display: none;
-    }
+    .admin-panel { margin-top: .75rem; padding: 1rem; background: var(--bg); border-radius: var(--radius-sm); border: 0.5px solid var(--border); display: none; }
     .admin-panel.open { display: block; }
-
     .pin-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
     .pin-row input { width: 110px; margin-bottom: 0; letter-spacing: .2em; text-align: center; font-size: 16px; }
-
-    .btn-sm {
-      padding: 8px 13px;
-      background: var(--surface); color: var(--text);
-      border: 0.5px solid var(--border); border-radius: var(--radius-sm);
-      font-size: 13px; cursor: pointer; white-space: nowrap;
-    }
+    .btn-sm { padding: 8px 13px; background: var(--surface); color: var(--text); border: 0.5px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; cursor: pointer; white-space: nowrap; }
     .btn-sm:hover { background: var(--green-light); color: var(--green); }
-
-    .btn-reset {
-      width: 100%; padding: 11px;
-      background: var(--red-light); color: var(--red);
-      border: 0.5px solid rgba(192,57,43,0.2); border-radius: var(--radius-sm);
-      font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px;
-    }
+    .btn-reset { width: 100%; padding: 11px; background: var(--red-light); color: var(--red); border: 0.5px solid rgba(192,57,43,0.2); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 4px; }
     .btn-reset:hover { filter: brightness(0.95); }
-    .btn-reset:active { transform: scale(0.98); }
-
     .pin-error { font-size: 12px; color: var(--red); margin-bottom: 8px; display: none; }
     .pin-error.show { display: block; }
-
     .admin-divider { height: .5px; background: var(--border); margin: 12px 0; }
-
-    .admin-player-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 6px 8px;
-      border-radius: var(--radius-sm);
-      border: 0.5px solid var(--border);
-      margin-bottom: 4px;
-      background: var(--surface);
-      font-size: 13px;
-    }
-    .btn-remove {
-      background: none; border: none; color: var(--text-muted);
-      font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1;
-    }
+    .admin-player-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); margin-bottom: 4px; background: var(--surface); font-size: 13px; }
+    .btn-remove { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 0 4px; line-height: 1; }
     .btn-remove:hover { color: var(--red); }
-
     .add-row { display: flex; gap: 6px; margin-bottom: 8px; }
     .add-row input { flex: 1; margin-bottom: 0; }
+    .info-box { font-size: 12px; color: var(--text-muted); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 10px; margin-top: 6px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -233,11 +110,9 @@
   <div class="main-layout">
 
     <!-- LEVÝ SLOUPEC: formulář -->
-    <div class="card" id="form-card">
+    <div class="card">
       <div class="section-label">Hráč</div>
-      <select id="player-select">
-        <option value="">— vyber své jméno —</option>
-      </select>
+      <select id="player-select"><option value="">— vyber své jméno —</option></select>
       <input type="text" id="player-new" placeholder="Nebo napiš nové jméno…" />
       <button class="btn-go"   onclick="respond(true)">✓ Jdu!</button>
       <button class="btn-nogo" onclick="respond(false)">✕ Nejdu</button>
@@ -246,11 +121,13 @@
     <!-- PRAVÝ SLOUPEC: přehled -->
     <div class="card">
       <div class="section-label">Přehled hráčů</div>
-      <div class="metrics">
-        <div class="metric"><div class="num"            id="cnt-total">–</div><div class="lbl">celkem</div></div>
-        <div class="metric"><div class="num go-color"   id="cnt-go">–</div><div class="lbl">jdou</div></div>
-        <div class="metric"><div class="num nogo-color" id="cnt-nogo">–</div><div class="lbl">nejdou</div></div>
+
+      <!-- Jen počítadlo těch co jdou -->
+      <div class="single-metric">
+        <div class="num go-color" id="cnt-go">–</div>
+        <div class="lbl">hráčů potvrdilo účast</div>
       </div>
+
       <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div id="rsvp-list"><div class="loading">Načítám…</div></div>
       <div class="next-reset" id="next-reset"></div>
@@ -269,8 +146,15 @@
         </div>
         <div class="pin-error" id="pin-error">Špatný PIN</div>
 
-        <!-- Po odemčení -->
         <div id="admin-actions" style="display:none">
+
+          <!-- Datum a čas zápasu -->
+          <div class="section-label">Datum a čas zápasu</div>
+          <input type="datetime-local" id="match-datetime" style="margin-bottom:4px" />
+          <button class="btn-sm" style="width:100%;margin-bottom:4px" onclick="saveMatchDatetime()">Uložit datum a čas</button>
+          <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
+
+          <div class="admin-divider"></div>
 
           <!-- Přidat hráče -->
           <div class="section-label">Přidat hráče</div>
@@ -285,7 +169,7 @@
 
           <div class="admin-divider"></div>
 
-          <!-- Reset přihlášení -->
+          <!-- Reset -->
           <button class="btn-reset" onclick="adminReset()">🗑 Resetovat všechna přihlášení</button>
         </div>
       </div>
@@ -298,31 +182,40 @@
   // ============================================================
   // KONFIGURACE
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const ADMIN_PIN    = '1212'; // ← změň na svůj PIN
+  const SUPABASE_URL = 'DOPLŇ_SUPABASE_URL';
+  const SUPABASE_KEY = 'DOPLŇ_SUPABASE_ANON_KEY';
+  const ADMIN_PIN    = '1234'; // ← změň na svůj PIN
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  
 
-  // Příští reset
-  function nextMonday2300() {
-    const now = new Date();
-    const prague = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Prague' }));
-    const day = prague.getDay();
-    const daysUntil = day === 1 ? 7 : (8 - day) % 7;
-    const next = new Date(prague);
-    next.setDate(prague.getDate() + daysUntil);
-    next.setHours(23, 0, 0, 0);
-    return next;
+  // ---- Načtení nastavení ze Supabase ----
+  async function loadSettings() {
+    const { data } = await sb.from('settings').select('key, value');
+    const cfg = {};
+    (data || []).forEach(r => cfg[r.key] = r.value);
+
+    // Zobraz info o zápase
+    const label = cfg['match_label'] || 'Nejbližší zápas';
+    document.getElementById('match-label').textContent = label;
+
+    // Zobraz příští reset
+    renderNextReset(cfg['match_datetime'] || null);
+
+    return cfg;
   }
-  const nr = nextMonday2300();
-  document.getElementById('next-reset').textContent =
-    'Přihlášení se resetuje v pondělí ' +
-    nr.toLocaleDateString('cs-CZ', { day:'numeric', month:'numeric' }) + ' ve 23:00';
 
-  // Načti hráče do selectu
+  function renderNextReset(datetimeStr) {
+    const el = document.getElementById('next-reset');
+    if (!datetimeStr) { el.textContent = 'Datum zápasu není nastaveno.'; return; }
+    const matchTime = new Date(datetimeStr);
+    const resetTime = new Date(matchTime.getTime() + 4.5 * 60 * 60 * 1000);
+    el.textContent = 'Reset přihlášení: ' +
+      resetTime.toLocaleDateString('cs-CZ', { weekday:'short', day:'numeric', month:'numeric' }) +
+      ' v ' + resetTime.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // ---- Hráči ----
   async function loadPlayers() {
     const { data } = await sb.from('players').select('name').order('name');
     const sel = document.getElementById('player-select');
@@ -334,20 +227,18 @@
     });
   }
 
-  // Načti přehled odpovědí
+  // ---- RSVP přehled ----
   async function loadRsvp() {
-    const { data } = await sb
-      .from('rsvp').select('player_name, going')
-      .order('updated_at', { ascending: false });
-    const rows  = data || [];
-    const go    = rows.filter(r => r.going);
-    const nogo  = rows.filter(r => !r.going);
+    const { data } = await sb.from('rsvp').select('player_name, going').order('updated_at', { ascending: false });
+    const rows = data || [];
+    const go   = rows.filter(r => r.going);
+    const nogo = rows.filter(r => !r.going);
     const total = rows.length;
-    document.getElementById('cnt-total').textContent = total;
-    document.getElementById('cnt-go').textContent    = go.length;
-    document.getElementById('cnt-nogo').textContent  = nogo.length;
+
+    document.getElementById('cnt-go').textContent  = go.length;
     const pct = total > 0 ? Math.round(go.length / total * 100) : 0;
-    document.getElementById('bar-fill').style.width  = pct + '%';
+    document.getElementById('bar-fill').style.width = pct + '%';
+
     const list = document.getElementById('rsvp-list');
     if (!rows.length) { list.innerHTML = '<div class="empty">Zatím žádné odpovědi</div>'; return; }
     list.innerHTML = [...go, ...nogo].map(r =>
@@ -358,7 +249,7 @@
     ).join('');
   }
 
-  // Odpověď hráče
+  // ---- Odpověď hráče ----
   async function respond(going) {
     const name = document.getElementById('player-select').value ||
                  document.getElementById('player-new').value.trim();
@@ -376,13 +267,13 @@
     await loadRsvp();
   }
 
+  // ---- Helpers ----
   function flash(msg, ok) {
     const el = document.getElementById('flash');
     el.textContent = msg;
     el.className = 'flash show ' + (ok ? 'ok' : 'err');
     setTimeout(() => el.classList.remove('show'), 4000);
   }
-
   function esc(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
@@ -393,7 +284,6 @@
     .subscribe();
 
   // ---- ADMIN ----
-
   function toggleAdminPanel() {
     const panel = document.getElementById('admin-panel');
     const isOpen = panel.classList.toggle('open');
@@ -410,6 +300,7 @@
       document.getElementById('btn-unlock').style.color = 'var(--green)';
       document.getElementById('pin-error').classList.remove('show');
       loadAdminPlayers();
+      loadMatchDatetime();
     } else {
       document.getElementById('pin-error').classList.add('show');
       document.getElementById('admin-pin').value = '';
@@ -426,7 +317,48 @@
     document.getElementById('new-player-input').value = '';
   }
 
-  // Načti seznam hráčů v admin panelu
+  // Načti aktuální datum zápasu do inputu
+  async function loadMatchDatetime() {
+    const { data } = await sb.from('settings').select('value').eq('key', 'match_datetime').single();
+    if (data) {
+      // datetime-local potřebuje formát YYYY-MM-DDTHH:MM
+      const val = data.value.slice(0, 16);
+      document.getElementById('match-datetime').value = val;
+      updateResetInfo(data.value);
+    }
+  }
+
+  function updateResetInfo(datetimeStr) {
+    if (!datetimeStr) return;
+    const matchTime = new Date(datetimeStr);
+    const resetTime = new Date(matchTime.getTime() + 4.5 * 60 * 60 * 1000);
+    document.getElementById('reset-info').textContent =
+      'Reset přihlášení proběhne: ' +
+      resetTime.toLocaleDateString('cs-CZ', { weekday:'short', day:'numeric', month:'numeric' }) +
+      ' v ' + resetTime.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // Uložit datum a čas zápasu
+  async function saveMatchDatetime() {
+    const val = document.getElementById('match-datetime').value;
+    if (!val) { flash('Vyber datum a čas zápasu.', false); return; }
+
+    // Sestav hezký popisek pro hráče
+    const dt = new Date(val);
+    const label = dt.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'numeric' }) +
+      ' · ' + dt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+
+    // Ulož obě hodnoty do settings
+    await sb.from('settings').upsert({ key: 'match_datetime', value: val },        { onConflict: 'key' });
+    await sb.from('settings').upsert({ key: 'match_label',    value: label },       { onConflict: 'key' });
+
+    document.getElementById('match-label').textContent = label;
+    updateResetInfo(val);
+    renderNextReset(val);
+    flash('Datum zápasu uloženo.', true);
+  }
+
+  // Seznam hráčů v admin panelu
   async function loadAdminPlayers() {
     const { data } = await sb.from('players').select('name').order('name');
     const list = document.getElementById('admin-players-list');
@@ -439,7 +371,6 @@
     ).join('');
   }
 
-  // Přidat hráče
   async function adminAddPlayer() {
     const name = document.getElementById('new-player-input').value.trim();
     if (!name) return;
@@ -451,7 +382,6 @@
     await loadPlayers();
   }
 
-  // Odebrat hráče (smaže i jeho přihlášení přes CASCADE)
   async function adminRemovePlayer(name) {
     const { error } = await sb.from('players').delete().eq('name', name);
     if (error) { flash('Chyba: ' + error.message, false); return; }
@@ -461,7 +391,6 @@
     await loadRsvp();
   }
 
-  // Reset přihlášení
   async function adminReset() {
     const { error } = await sb.from('rsvp').delete().neq('player_name', '___placeholder___');
     if (error) { flash('Chyba při resetování: ' + error.message, false); return; }
@@ -472,6 +401,8 @@
     await loadRsvp();
   }
 
+  // Init
+  loadSettings();
   loadPlayers();
   loadRsvp();
 </script>
