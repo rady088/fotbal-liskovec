@@ -189,9 +189,9 @@
   // ============================================================
   // KONFIGURACE
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const ADMIN_PIN    = '1212'; // ← změň na svůj PIN
+  const SUPABASE_URL = 'DOPLŇ_SUPABASE_URL';
+  const SUPABASE_KEY = 'DOPLŇ_SUPABASE_ANON_KEY';
+  const ADMIN_PIN    = '1234'; // ← změň na svůj PIN
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -361,10 +361,12 @@
     const dt = new Date(val);
     const dayRaw = dt.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'numeric', year:'numeric' });
     const dayCapitalized = dayRaw.charAt(0).toUpperCase() + dayRaw.slice(1);
-    const timeStr = dt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+    const vikopStr = dt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
     const srazDt = new Date(dt.getTime() - 30 * 60 * 1000);
+    const losDt  = new Date(dt.getTime() - 60 * 60 * 1000);
     const srazStr = srazDt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    const label = dayCapitalized + '  ' + timeStr + '  (sraz ' + srazStr + ')';
+    const losStr  = losDt.toLocaleTimeString('cs-CZ',  { hour:'2-digit', minute:'2-digit' });
+    const label = dayCapitalized + '  ·  🎲 los ' + losStr + '  ·  🤝 sraz ' + srazStr + '  ·  ⚽ výkop ' + vikopStr;
 
     // Ulož do settings
     await sb.from('settings').upsert({ key: 'match_datetime', value: val },   { onConflict: 'key' });
