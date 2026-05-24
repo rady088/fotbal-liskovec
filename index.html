@@ -58,8 +58,9 @@
     .single-metric .num { font-size: 48px; font-weight: 700; line-height: 1; color: var(--green); }
     .single-metric .lbl { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
 
-    .bar-wrap { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; margin-bottom: 1rem; }
-    .bar-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width .4s; }
+    .match-card { background: var(--green); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    .match-card .match-datetime { color: #fff; font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 4px; }
+    .match-card .match-venue { color: rgba(255,255,255,0.75); font-size: 14px; }
 
     .player-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); margin-bottom: 5px; }
     .player-name { font-weight: 500; font-size: 13px; }
@@ -76,7 +77,6 @@
     .loading { text-align: center; padding: 1rem;   color: var(--text-muted); font-size: 13px; }
 
     .next-reset    { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: .75rem; }
-    .match-info-bar { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; padding: 0 .25rem; }
 
     /* ADMIN */
     .admin-bar { margin-top: 1rem; display: flex; justify-content: flex-end; }
@@ -105,7 +105,10 @@
 <div class="container">
 
   <div id="flash" class="flash"></div>
-  <p class="match-info-bar" id="match-label"></p>
+  <div class="match-card">
+    <div class="match-datetime" id="match-label">Načítám…</div>
+    <div class="match-venue" id="match-venue"></div>
+  </div>
 
   <div class="main-layout">
 
@@ -128,7 +131,6 @@
         <div class="lbl">hráčů potvrdilo účast</div>
       </div>
 
-      <div class="bar-wrap"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
       <div id="rsvp-list"><div class="loading">Načítám…</div></div>
       <div class="next-reset" id="next-reset"></div>
 
@@ -151,7 +153,12 @@
           <!-- Datum a čas zápasu -->
           <div class="section-label">Datum a čas zápasu</div>
           <input type="datetime-local" id="match-datetime" style="margin-bottom:4px" />
-          <button class="btn-sm" style="width:100%;margin-bottom:4px" onclick="saveMatchDatetime()">Uložit datum a čas</button>
+          <div class="section-label" style="margin-top:4px">Místo zápasu</div>
+          <select id="match-venue-select">
+            <option value="Hřiště v Lískovci">Hřiště v Lískovci</option>
+            <option value="Tělocvična Horničák">Tělocvična Horničák</option>
+          </select>
+          <button class="btn-sm" style="width:100%;margin-bottom:4px" onclick="saveMatchDatetime()">Uložit</button>
           <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
 
           <div class="admin-divider"></div>
@@ -182,9 +189,9 @@
   // ============================================================
   // KONFIGURACE
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const ADMIN_PIN    = '1212'; // ← změň na svůj PIN
+  const SUPABASE_URL = 'DOPLŇ_SUPABASE_URL';
+  const SUPABASE_KEY = 'DOPLŇ_SUPABASE_ANON_KEY';
+  const ADMIN_PIN    = '1234'; // ← změň na svůj PIN
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -198,6 +205,11 @@
     // Zobraz info o zápase
     const label = cfg['match_label'] || 'Nejbližší zápas';
     document.getElementById('match-label').textContent = label;
+
+    // Zobraz místo
+    const venue = cfg['match_venue'] || '';
+    const venueEl = document.getElementById('match-venue');
+    venueEl.textContent = venue ? '📍 ' + venue : '';
 
     // Zobraz příští reset
     renderNextReset(cfg['match_datetime'] || null);
@@ -236,8 +248,6 @@
     const total = rows.length;
 
     document.getElementById('cnt-go').textContent  = go.length;
-    const pct = total > 0 ? Math.round(go.length / total * 100) : 0;
-    document.getElementById('bar-fill').style.width = pct + '%';
 
     const list = document.getElementById('rsvp-list');
     if (!rows.length) { list.innerHTML = '<div class="empty">Zatím žádné odpovědi</div>'; return; }
@@ -317,14 +327,17 @@
     document.getElementById('new-player-input').value = '';
   }
 
-  // Načti aktuální datum zápasu do inputu
+  // Načti aktuální datum zápasu a místo do admin inputů
   async function loadMatchDatetime() {
-    const { data } = await sb.from('settings').select('value').eq('key', 'match_datetime').single();
-    if (data) {
-      // datetime-local potřebuje formát YYYY-MM-DDTHH:MM
-      const val = data.value.slice(0, 16);
-      document.getElementById('match-datetime').value = val;
-      updateResetInfo(data.value);
+    const { data } = await sb.from('settings').select('key, value').in('key', ['match_datetime', 'match_venue']);
+    const cfg = {};
+    (data || []).forEach(r => cfg[r.key] = r.value);
+    if (cfg['match_datetime']) {
+      document.getElementById('match-datetime').value = cfg['match_datetime'].slice(0, 16);
+      updateResetInfo(cfg['match_datetime']);
+    }
+    if (cfg['match_venue']) {
+      document.getElementById('match-venue-select').value = cfg['match_venue'];
     }
   }
 
@@ -338,9 +351,10 @@
       ' v ' + resetTime.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
   }
 
-  // Uložit datum a čas zápasu
+  // Uložit datum, čas a místo zápasu
   async function saveMatchDatetime() {
     const val = document.getElementById('match-datetime').value;
+    const venue = document.getElementById('match-venue-select').value;
     if (!val) { flash('Vyber datum a čas zápasu.', false); return; }
 
     // Sestav hezký popisek pro hráče
@@ -348,14 +362,16 @@
     const label = dt.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'numeric' }) +
       ' · ' + dt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
 
-    // Ulož obě hodnoty do settings
-    await sb.from('settings').upsert({ key: 'match_datetime', value: val },        { onConflict: 'key' });
-    await sb.from('settings').upsert({ key: 'match_label',    value: label },       { onConflict: 'key' });
+    // Ulož do settings
+    await sb.from('settings').upsert({ key: 'match_datetime', value: val },   { onConflict: 'key' });
+    await sb.from('settings').upsert({ key: 'match_label',    value: label }, { onConflict: 'key' });
+    await sb.from('settings').upsert({ key: 'match_venue',    value: venue }, { onConflict: 'key' });
 
     document.getElementById('match-label').textContent = label;
+    document.getElementById('match-venue').textContent = venue ? '📍 ' + venue : '';
     updateResetInfo(val);
     renderNextReset(val);
-    flash('Datum zápasu uloženo.', true);
+    flash('Uloženo.', true);
   }
 
   // Seznam hráčů v admin panelu
