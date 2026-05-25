@@ -15,11 +15,11 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
           python3 << 'PYEOF'
-          import urllib.request, urllib.error, json, datetime, sys
+          import urllib.request, urllib.error, json, datetime, sys, zoneinfo, os
 
-          url = f"{open('/dev/stdin').read().strip()}" if False else None
-          supabase_url = __import__('os').environ['SUPABASE_URL']
-          supabase_key = __import__('os').environ['SUPABASE_KEY']
+          supabase_url = os.environ['SUPABASE_URL']
+          supabase_key = os.environ['SUPABASE_KEY']
+          prague = zoneinfo.ZoneInfo('Europe/Prague')
 
           def api(path, method='GET', data=None):
               req = urllib.request.Request(
@@ -50,21 +50,14 @@ jobs:
           match_str = rows[0]['value']
           print(f"Datum zápasu: {match_str}")
 
-          # Parsuj datum (formát: YYYY-MM-DDTHH:MM)
-          try:
-              match_time = datetime.datetime.fromisoformat(match_str)
-          except Exception as e:
-              print(f"Chyba parsování data: {e}")
-              sys.exit(0)
-
+          # Parsuj datum jako pražský čas
+          match_time = datetime.datetime.fromisoformat(match_str).replace(tzinfo=prague)
           reset_time = match_time + datetime.timedelta(hours=5, minutes=30)
-          import zoneinfo
-          now = datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Prague')).replace(tzinfo=None)
-          reset_time = match_time  # match_time je už v pražském čase
+          now = datetime.datetime.now(prague)
           window = datetime.timedelta(minutes=15)
 
-          print(f"Reset naplánován na: {reset_time} UTC")
-          print(f"Nyní (UTC): {now}")
+          print(f"Reset naplánován na: {reset_time.strftime('%Y-%m-%d %H:%M')} Praha")
+          print(f"Nyní (Praha): {now.strftime('%Y-%m-%d %H:%M')}")
 
           if reset_time <= now < reset_time + window:
               print("Čas resetu nastal — mažu přihlášení...")
