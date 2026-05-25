@@ -58,7 +58,9 @@ jobs:
               sys.exit(0)
 
           reset_time = match_time + datetime.timedelta(hours=5, minutes=30)
-          now = datetime.datetime.utcnow()
+          import zoneinfo
+          now = datetime.datetime.now(zoneinfo.ZoneInfo('Europe/Prague')).replace(tzinfo=None)
+          reset_time = match_time  # match_time je už v pražském čase
           window = datetime.timedelta(minutes=15)
 
           print(f"Reset naplánován na: {reset_time} UTC")
