@@ -2,7 +2,6 @@ name: Reset přihlášení po zápase
 
 on:
   schedule:
-    # Spouštíme každých 15 minut
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
@@ -11,93 +10,79 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Zkontroluj čas zápasu a případně resetuj
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
         run: |
-          # Načti datum zápasu z Supabase settings
-          MATCH_DATETIME=$(curl -s \
-            "${{ secrets.SUPABASE_URL }}/rest/v1/settings?key=eq.match_datetime&select=value" \
-            -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d[0]['value'] if d and d[0]['value'] else '')")
+          python3 << 'PYEOF'
+          import urllib.request, urllib.error, json, datetime, sys
 
-          echo "Datum zápasu: $MATCH_DATETIME"
+          url = f"{open('/dev/stdin').read().strip()}" if False else None
+          supabase_url = __import__('os').environ['SUPABASE_URL']
+          supabase_key = __import__('os').environ['SUPABASE_KEY']
 
-          if [ -z "$MATCH_DATETIME" ]; then
-            echo "Datum zápasu není nastaveno, přeskakuji."
-            exit 0
-          fi
+          def api(path, method='GET', data=None):
+              req = urllib.request.Request(
+                  supabase_url + path,
+                  data=json.dumps(data).encode() if data else None,
+                  method=method,
+                  headers={
+                      'apikey': supabase_key,
+                      'Authorization': 'Bearer ' + supabase_key,
+                      'Content-Type': 'application/json',
+                      'Prefer': 'return=minimal'
+                  }
+              )
+              try:
+                  with urllib.request.urlopen(req) as r:
+                      body = r.read()
+                      return json.loads(body) if body else {}
+              except urllib.error.HTTPError as e:
+                  print(f"HTTP Error: {e.code} {e.read()}")
+                  return {}
 
-          MATCH_TS=$(date -d "$MATCH_DATETIME" +%s)
-          RESET_TS=$((MATCH_TS + 16200))   # +4,5 hodiny
-          NOW_TS=$(date +%s)
-          WINDOW=900                         # 15 min tolerance
+          # Načti datum zápasu
+          rows = api('/rest/v1/settings?key=eq.match_datetime&select=value')
+          if not rows or not rows[0].get('value'):
+              print("Datum zápasu není nastaveno, přeskakuji.")
+              sys.exit(0)
 
-          echo "Reset naplánován na: $(date -d @$RESET_TS)"
-          echo "Nyní: $(date)"
+          match_str = rows[0]['value']
+          print(f"Datum zápasu: {match_str}")
 
-          if [ "$NOW_TS" -ge "$RESET_TS" ] && [ "$NOW_TS" -lt "$((RESET_TS + WINDOW))" ]; then
-            echo "Čas resetu nastal — mažu přihlášení..."
+          # Parsuj datum (formát: YYYY-MM-DDTHH:MM)
+          try:
+              match_time = datetime.datetime.fromisoformat(match_str)
+          except Exception as e:
+              print(f"Chyba parsování data: {e}")
+              sys.exit(0)
 
-            # 1) Smaž přihlášení
-            curl -s -X DELETE \
-              "${{ secrets.SUPABASE_URL }}/rest/v1/rsvp?player_name=neq.___placeholder___" \
-              -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Content-Type: application/json"
+          reset_time = match_time + datetime.timedelta(hours=5, minutes=30)
+          now = datetime.datetime.utcnow()
+          window = datetime.timedelta(minutes=15)
 
-            echo "Přihlášení smazána."
+          print(f"Reset naplánován na: {reset_time} UTC")
+          print(f"Nyní (UTC): {now}")
 
-            # 2) Vypočítej příští pondělí 17:30 Prague (UTC+2 léto / UTC+1 zima)
-            NEXT_MONDAY=$(python3 << 'PYEOF'
-from datetime import datetime, timedelta
-import subprocess, json
+          if reset_time <= now < reset_time + window:
+              print("Čas resetu nastal — mažu přihlášení...")
+              api('/rest/v1/rsvp?player_name=neq.___placeholder___', method='DELETE')
+              print("Přihlášení smazána.")
 
-# Aktuální čas v Prague (přibližně — pro výpočet data stačí UTC)
-now = datetime.utcnow()
+              # Vypočítej příští pondělí 17:30
+              days_ahead = (7 - now.weekday()) % 7
+              if days_ahead == 0:
+                  days_ahead = 7
+              next_monday = now + datetime.timedelta(days=days_ahead)
+              next_monday = next_monday.replace(hour=17, minute=30, second=0, microsecond=0)
+              next_str = next_monday.strftime('%Y-%m-%dT17:30')
 
-# Najdi příští pondělí
-days_ahead = (7 - now.weekday()) % 7  # 0=pondělí
-if days_ahead == 0:
-    days_ahead = 7  # pokud je dnes pondělí, vezmi příští
-next_monday = now + timedelta(days=days_ahead)
-next_monday = next_monday.replace(hour=15, minute=30, second=0, microsecond=0)
-# 17:30 Prague SELČ = 15:30 UTC (léto, UTC+2); bezpečná hodnota pro léto
-# Uložíme jako lokální čas pro zobrazení v input
-# Formát pro datetime-local input a popisek
-local_str = next_monday.strftime('%Y-%m-%dT17:30')  # uložíme jako Prague local time
-print(local_str)
-PYEOF
-)
+              days_cs = ['Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota','Neděle']
+              label = f"{days_cs[next_monday.weekday()]} {next_monday.day}. {next_monday.month}. {next_monday.year}  ·  🎲 los 16:30  ·  🤝 sraz 17:00  ·  ⚽ výkop 17:30"
 
-            echo "Příští zápas nastaven na: $NEXT_MONDAY"
-
-            # Sestav hezký popisek (cs den, datum)
-            LABEL=$(python3 << PYEOF
-from datetime import datetime
-dt = datetime.strptime("$NEXT_MONDAY", "%Y-%m-%dT%H:%M")
-days_cs = ['pondělí','úterý','středa','čtvrtek','pátek','sobota','neděle']
-label = f"{days_cs[dt.weekday()]} {dt.day}. {dt.month}. · {dt.strftime('%H:%M')}"
-print(label)
-PYEOF
-)
-
-            echo "Popisek: $LABEL"
-
-            # 3) Ulož nový datum zápasu do settings
-            curl -s -X PATCH \
-              "${{ secrets.SUPABASE_URL }}/rest/v1/settings?key=eq.match_datetime" \
-              -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"value\": \"$NEXT_MONDAY\"}"
-
-            curl -s -X PATCH \
-              "${{ secrets.SUPABASE_URL }}/rest/v1/settings?key=eq.match_label" \
-              -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_KEY }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"value\": \"$LABEL\"}"
-
-            echo "Hotovo: reset dokončen, příští zápas nastaven na $LABEL"
-          else
-            echo "Ještě není čas na reset."
-          fi
+              api('/rest/v1/settings?key=eq.match_datetime', method='PATCH', data={'value': next_str})
+              api('/rest/v1/settings?key=eq.match_label', method='PATCH', data={'value': label})
+              print(f"Příští zápas nastaven na: {label}")
+          else:
+              print("Ještě není čas na reset.")
+          PYEOF
