@@ -52,7 +52,7 @@ jobs:
 
           # Parsuj datum jako pražský čas
           match_time = datetime.datetime.fromisoformat(match_str).replace(tzinfo=prague)
-          reset_time = match_time + datetime.timedelta(hours=5, minutes=30)
+          reset_time = match_time + datetime.timedelta(hours=4, minutes=30)
           now = datetime.datetime.now(prague)
           window = datetime.timedelta(minutes=15)
 
