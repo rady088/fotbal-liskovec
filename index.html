@@ -4,612 +4,314 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fotbal Lískovec</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --green:#1a5c2a; --green-dark:#154d23; --green-light:#e6f4ea;
-      --red-light:#fde8e8; --red:#c0392b; --orange:#e67e22;
-      --bg:#f4f4f2; --surface:#ffffff; --border:rgba(0,0,0,0.1);
-      --text:#1a1a18; --text-muted:#6b6b67; --radius:12px; --radius-sm:8px;
-    }
-    @media (prefers-color-scheme:dark) {
-      :root { --bg:#1a1a18; --surface:#242422; --border:rgba(255,255,255,0.1); --text:#e8e8e4; --text-muted:#9a9a94; --green-light:#0d2e14; --red-light:#2e0d0d; }
-    }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:2rem; }
-    .container { max-width:900px; margin:0 auto; padding:1rem; }
-    .card { background:var(--surface); border:0.5px solid var(--border); border-radius:var(--radius); padding:1.25rem; }
-    .main-layout { display:grid; grid-template-columns:1fr 1fr; gap:1rem; align-items:start; }
-    @media(max-width:600px){ .main-layout{grid-template-columns:1fr;} }
-    .section-label { font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:.07em; text-transform:uppercase; margin-bottom:8px; }
-    select,input[type="text"],input[type="password"],input[type="datetime-local"],input[type="number"] {
-      width:100%; padding:16px; border:0.5px solid var(--border); border-radius:var(--radius-sm);
-      background:var(--surface); color:var(--text); font-size:17px; font-family:inherit;
-      margin-bottom:20px; appearance:none; -webkit-appearance:none;
-    }
-    input[type="number"] { padding:8px 10px; font-size:14px; margin-bottom:0; }
-    select:focus,input:focus { outline:2px solid var(--green); outline-offset:1px; }
-    .btn-go { width:100%; padding:22px; background:var(--green); color:#fff; border:none; border-radius:var(--radius-sm); font-size:20px; font-weight:700; cursor:pointer; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:8px; }
-    .btn-go:hover { background:var(--green-dark); }
-    .btn-nogo { width:70%; margin:0 auto; padding:9px; background:var(--surface); color:var(--text-muted); border:0.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
-    .btn-nogo:hover { background:var(--bg); }
-    .single-metric { text-align:center; padding:.75rem .5rem 1rem; }
-    .single-metric .num { font-size:48px; font-weight:700; line-height:1; color:var(--green); }
-    .single-metric .lbl { font-size:13px; color:var(--text-muted); margin-top:4px; }
-    .match-card { background:var(--green); border-radius:var(--radius); padding:1rem 1.25rem; margin-bottom:1rem; }
-    .match-card .match-datetime { color:#fff; font-size:22px; font-weight:700; line-height:1.2; margin-bottom:4px; }
-    .match-card .match-venue { color:rgba(255,255,255,0.75); font-size:14px; }
-    .player-row { display:flex; align-items:center; justify-content:space-between; padding:7px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border); margin-bottom:5px; }
-    .player-name { font-weight:500; font-size:13px; }
-    .badge { font-size:11px; padding:3px 9px; border-radius:20px; font-weight:600; }
-    .badge-go { background:var(--green-light); color:var(--green); }
-    .badge-nogo { background:var(--red-light); color:var(--red); }
-    .flash { border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; margin-bottom:1rem; display:none; }
-    .flash.show { display:block; }
-    .flash.ok  { background:var(--green-light); color:var(--green); }
-    .flash.err { background:var(--red-light); color:var(--red); }
-    .empty   { text-align:center; padding:1.5rem; color:var(--text-muted); font-size:13px; }
-    .loading { text-align:center; padding:1rem; color:var(--text-muted); font-size:13px; }
-    .next-reset { font-size:12px; color:var(--text-muted); text-align:center; margin-top:.75rem; }
-
-    /* NAV TABS */
-    .nav-tabs { display:flex; gap:6px; margin-bottom:1rem; overflow-x:auto; }
-    .nav-tab { padding:8px 18px; border-radius:20px; border:0.5px solid var(--border); background:var(--surface); color:var(--text-muted); cursor:pointer; font-size:13px; white-space:nowrap; }
-    .nav-tab.active { background:var(--green); color:#fff; border-color:var(--green); font-weight:600; }
-
-    /* PAGES */
-    .page { display:none; }
-    .page.active { display:block; }
-
-    /* ADMIN */
-    .admin-bar { margin-top:1rem; display:flex; justify-content:flex-end; }
-    .btn-admin-toggle { background:none; border:none; font-size:12px; color:var(--text-muted); cursor:pointer; padding:4px 6px; border-radius:var(--radius-sm); }
-    .btn-admin-toggle:hover { background:var(--bg); }
-    .admin-panel { margin-top:.75rem; padding:1rem; background:var(--bg); border-radius:var(--radius-sm); border:0.5px solid var(--border); display:none; }
-    .admin-panel.open { display:block; }
-    .pin-row { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
-    .pin-row input { width:110px; margin-bottom:0; letter-spacing:.2em; text-align:center; font-size:16px; }
-    .btn-sm { padding:8px 13px; background:var(--surface); color:var(--text); border:0.5px solid var(--border); border-radius:var(--radius-sm); font-size:13px; cursor:pointer; white-space:nowrap; }
-    .btn-sm:hover { background:var(--green-light); color:var(--green); }
-    .btn-reset { width:100%; padding:11px; background:var(--red-light); color:var(--red); border:0.5px solid rgba(192,57,43,0.2); border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; margin-top:4px; }
-    .btn-reset:hover { filter:brightness(0.95); }
-    .pin-error { font-size:12px; color:var(--red); margin-bottom:8px; display:none; }
-    .pin-error.show { display:block; }
-    .admin-divider { height:.5px; background:var(--border); margin:12px 0; }
-    .admin-player-row { display:flex; align-items:center; justify-content:space-between; padding:6px 8px; border-radius:var(--radius-sm); border:0.5px solid var(--border); margin-bottom:4px; background:var(--surface); font-size:13px; gap:8px; }
-    .admin-player-row .pname { flex:1; font-weight:500; }
-    .level-input { width:60px !important; padding:6px 8px !important; font-size:13px !important; margin-bottom:0 !important; text-align:center; }
-    .btn-remove { background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:0 4px; line-height:1; }
-    .btn-remove:hover { color:var(--red); }
-    .add-row { display:flex; gap:6px; margin-bottom:8px; align-items:center; }
-    .add-row input { flex:1; margin-bottom:0; }
-    .info-box { font-size:12px; color:var(--text-muted); background:var(--surface); border-radius:var(--radius-sm); padding:8px 10px; margin-top:6px; line-height:1.5; }
-
-    /* LOS PAGE */
-    .los-waiting { text-align:center; padding:3rem 1rem; color:var(--text-muted); }
-    .los-waiting .icon { font-size:48px; margin-bottom:1rem; }
-    .teams-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
-    @media(max-width:500px){ .teams-grid{grid-template-columns:1fr;} }
-    .team-card { border-radius:var(--radius); padding:1rem; }
-    .team-a { background:linear-gradient(135deg,#1a5c2a,#2d8a45); color:#fff; }
-    .team-b { background:linear-gradient(135deg,#1a3a6b,#2d5fa8); color:#fff; }
-    .team-title { font-size:11px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; opacity:.75; margin-bottom:.5rem; }
-    .team-sum { font-size:28px; font-weight:700; line-height:1; margin-bottom:.25rem; }
-    .team-avg { font-size:13px; opacity:.75; margin-bottom:.75rem; }
-    .team-player { display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.15); font-size:14px; }
-    .team-player:last-child { border-bottom:none; }
-    .team-player .lvl { opacity:.65; font-size:12px; }
-    .balance-bar { margin-bottom:1rem; }
-    .balance-label { display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:4px; }
-    .balance-track { height:8px; background:var(--bg); border-radius:4px; overflow:hidden; position:relative; }
-    .balance-fill { height:100%; border-radius:4px; transition:width .5s; }
-    .balance-fill.good { background:var(--green); }
-    .balance-fill.ok   { background:#f39c12; }
-    .balance-fill.bad  { background:var(--red); }
-    .score-row { display:flex; gap:8px; margin-bottom:1rem; }
-    .score-box { flex:1; background:var(--bg); border-radius:var(--radius-sm); padding:.75rem; text-align:center; }
-    .score-box .sv { font-size:20px; font-weight:700; }
-    .score-box .sl { font-size:11px; color:var(--text-muted); margin-top:2px; }
-    .btn-los { width:100%; padding:14px; background:var(--green); color:#fff; border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:700; cursor:pointer; margin-bottom:8px; }
-    .btn-los:hover { background:var(--green-dark); }
-    .btn-los-save { width:100%; padding:11px; background:var(--surface); color:var(--green); border:1.5px solid var(--green); border-radius:var(--radius-sm); font-size:14px; font-weight:600; cursor:pointer; }
-    .btn-los-save:hover { background:var(--green-light); }
-    .history-row { padding:8px 10px; border-radius:var(--radius-sm); border:0.5px solid var(--border); margin-bottom:5px; font-size:13px; }
-    .history-date { font-size:11px; color:var(--text-muted); margin-bottom:3px; }
-  </style>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#1a5c2a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="FK Lískovec" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --green:#1a5c2a;--green-dark:#154d23;--green-light:#e6f4ea;
+      --red:#c0392b;--red-light:#fde8e8;
+      --bg:#f4f4f2;--surface:#fff;--border:rgba(0,0,0,0.1);
+      --text:#1a1a18;--text-muted:#6b6b67;--radius:12px;--radius-sm:8px;
+    }
+    @media(prefers-color-scheme:dark){
+      :root{--bg:#1a1a18;--surface:#242422;--border:rgba(255,255,255,0.1);--text:#e8e8e4;--text-muted:#9a9a94;--green-light:#0d2e14;--red-light:#2e0d0d;}
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:2rem}
+    .container{max-width:900px;margin:0 auto;padding:1rem}
+    .match-card{background:var(--green);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem}
+    .match-card .mdt{color:#fff;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:3px}
+    .match-card .mvn{color:rgba(255,255,255,.7);font-size:13px}
+    .card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}
+    @media(max-width:600px){.two-col{grid-template-columns:1fr}}
+    .section-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+    select,input[type="text"],input[type="password"],input[type="datetime-local"],input[type="number"]{
+      width:100%;padding:16px;border:.5px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--surface);color:var(--text);font-size:17px;font-family:inherit;margin-bottom:20px;appearance:none}
+    input[type="number"].sm{padding:7px 8px;font-size:13px;margin-bottom:0;width:65px}
+    select:focus,input:focus{outline:2px solid var(--green);outline-offset:1px}
+    .btn-go{width:100%;padding:22px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:20px;font-weight:700;cursor:pointer;margin-bottom:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-go:hover{background:var(--green-dark)}
+    .btn-nogo{width:70%;margin:0 auto;padding:9px;background:var(--surface);color:var(--text-muted);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+    .btn-nogo:hover{background:var(--bg)}
+    .btn-sm{padding:8px 13px;background:var(--surface);color:var(--text);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;white-space:nowrap}
+    .btn-sm:hover{background:var(--green-light);color:var(--green)}
+    .btn-danger{width:100%;padding:11px;background:var(--red-light);color:var(--red);border:.5px solid rgba(192,57,43,.2);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer}
+    .flash{border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:1rem;display:none}
+    .flash.show{display:block}
+    .flash.ok{background:var(--green-light);color:var(--green)}
+    .flash.err{background:var(--red-light);color:var(--red)}
+    .single-metric{text-align:center;padding:.75rem .5rem 1rem}
+    .single-metric .num{font-size:48px;font-weight:700;line-height:1;color:var(--green)}
+    .single-metric .lbl{font-size:13px;color:var(--text-muted);margin-top:4px}
+    .player-row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:var(--radius-sm);border:.5px solid var(--border);margin-bottom:5px}
+    .badge{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+    .badge-go{background:var(--green-light);color:var(--green)}
+    .badge-nogo{background:var(--red-light);color:var(--red)}
+    .next-reset{font-size:12px;color:var(--text-muted);text-align:center;margin-top:.75rem}
+    .admin-bar{margin-top:1rem;display:flex;justify-content:flex-end}
+    .btn-admin-toggle{background:none;border:none;font-size:12px;color:var(--text-muted);cursor:pointer;padding:4px 6px;border-radius:var(--radius-sm)}
+    .btn-admin-toggle:hover{background:var(--bg)}
+    .admin-panel{margin-top:.75rem;padding:1rem;background:var(--bg);border-radius:var(--radius-sm);border:.5px solid var(--border);display:none}
+    .admin-panel.open{display:block}
+    .pin-row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+    .pin-row input{width:110px;margin-bottom:0;letter-spacing:.2em;text-align:center;font-size:16px}
+    .pin-error{font-size:12px;color:var(--red);margin-bottom:8px;display:none}
+    .pin-error.show{display:block}
+    .admin-divider{height:.5px;background:var(--border);margin:12px 0}
+    .apr{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:var(--radius-sm);border:.5px solid var(--border);margin-bottom:4px;background:var(--surface);font-size:13px}
+    .apr .pn{flex:1;font-weight:500}
+    .btn-rm{background:none;border:none;color:var(--text-muted);font-size:16px;cursor:pointer;padding:0 4px}
+    .btn-rm:hover{color:var(--red)}
+    .add-row{display:flex;gap:6px;margin-bottom:10px;align-items:center}
+    .add-row input{flex:1;margin-bottom:0}
+    .info-box{font-size:12px;color:var(--text-muted);background:var(--surface);border-radius:var(--radius-sm);padding:8px 10px;margin-top:6px;line-height:1.5}
+    .empty{text-align:center;padding:1.5rem;color:var(--text-muted);font-size:13px}
+    .loading{text-align:center;padding:1rem;color:var(--text-muted);font-size:13px}
+  </style>
 </head>
 <body>
 <div class="container">
   <div id="flash" class="flash"></div>
   <div class="match-card">
-    <div class="match-datetime" id="match-label">Načítám…</div>
-    <div class="match-venue" id="match-venue"></div>
+    <div class="mdt" id="match-label">Načítám…</div>
+    <div class="mvn" id="match-venue"></div>
   </div>
-
-  <!-- NAV -->
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('pg-prihlaseni',this)">⚽ Přihlášení</button>
-    <button class="nav-tab" onclick="showPage('pg-los',this)">🎲 Los</button>
-  </div>
-
-  <!-- PAGE: PŘIHLÁŠENÍ -->
-  <div id="pg-prihlaseni" class="page active">
-    <div class="main-layout">
-      <div class="card">
-        <div class="section-label">Hráč</div>
-        <select id="player-select"><option value="">— vyber své jméno —</option></select>
-        <input type="text" id="player-new" placeholder="Nebo napiš nové jméno…" />
-        <button class="btn-go" onclick="respond(true)">✓ Jdu!</button>
-        <button class="btn-nogo" onclick="respond(false)">✕ Nejdu</button>
+  <div class="two-col">
+    <div class="card">
+      <div class="section-label">Hráč</div>
+      <select id="player-select"><option value="">— vyber své jméno —</option></select>
+      <input type="text" id="player-new" placeholder="Nebo napiš nové jméno…" />
+      <button class="btn-go" onclick="respond(true)">✓ Jdu!</button>
+      <button class="btn-nogo" onclick="respond(false)">✕ Nejdu</button>
+    </div>
+    <div class="card">
+      <div class="section-label">Přehled hráčů</div>
+      <div class="single-metric">
+        <div class="num" id="cnt-go">–</div>
+        <div class="lbl">hráčů potvrdilo účast</div>
       </div>
-      <div class="card">
-        <div class="section-label">Přehled hráčů</div>
-        <div class="single-metric">
-          <div class="num" id="cnt-go">–</div>
-          <div class="lbl">hráčů potvrdilo účast</div>
+      <div id="rsvp-list"><div class="loading">Načítám…</div></div>
+      <div class="next-reset" id="next-reset"></div>
+      <div class="admin-bar">
+        <button class="btn-admin-toggle" onclick="toggleAdmin()" id="admin-toggle-btn">🔒 Admin</button>
+      </div>
+      <div class="admin-panel" id="admin-panel">
+        <div class="section-label" style="margin-bottom:10px">Admin</div>
+        <div class="pin-row">
+          <input type="password" id="admin-pin" maxlength="6" placeholder="PIN"
+            oninput="document.getElementById('pin-error').classList.remove('show')"
+            onkeydown="if(event.key==='Enter')unlockAdmin()" />
+          <button class="btn-sm" id="btn-unlock" onclick="unlockAdmin()">Odemknout</button>
         </div>
-        <div id="rsvp-list"><div class="loading">Načítám…</div></div>
-        <div class="next-reset" id="next-reset"></div>
-        <div class="admin-bar">
-          <button class="btn-admin-toggle" onclick="toggleAdminPanel()" id="admin-toggle-btn">🔒 Admin</button>
-        </div>
-        <div class="admin-panel" id="admin-panel">
-          <div class="section-label" style="margin-bottom:10px">Admin</div>
-          <div class="pin-row">
-            <input type="password" id="admin-pin" maxlength="6" placeholder="PIN" oninput="document.getElementById('pin-error').classList.remove('show')" />
-            <button class="btn-sm" id="btn-unlock" onclick="unlockAdmin()">Odemknout</button>
+        <div class="pin-error" id="pin-error">Špatný PIN</div>
+        <div id="admin-actions" style="display:none">
+          <div class="section-label">Datum a čas zápasu</div>
+          <input type="datetime-local" id="match-datetime" style="margin-bottom:6px" />
+          <div class="section-label" style="margin-top:2px">Místo zápasu</div>
+          <select id="match-venue-sel" style="margin-bottom:6px">
+            <option value="Hřiště v Lískovci">Hřiště v Lískovci</option>
+            <option value="Tělocvična Horničák">Tělocvična Horničák</option>
+          </select>
+          <button class="btn-sm" style="width:100%;margin-bottom:6px" onclick="saveMatchDatetime()">Uložit zápas</button>
+          <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
+          <div class="admin-divider"></div>
+          <div class="section-label">Přidat hráče</div>
+          <div class="add-row">
+            <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0"
+              onkeydown="if(event.key==='Enter')adminAddPlayer()" />
+            <input type="number" id="new-player-level" placeholder="Lvl" min="0" max="10" step="0.5" class="sm" />
+            <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
           </div>
-          <div class="pin-error" id="pin-error">Špatný PIN</div>
-          <div id="admin-actions" style="display:none">
-            <div class="section-label">Datum a čas zápasu</div>
-            <input type="datetime-local" id="match-datetime" style="margin-bottom:4px" />
-            <div class="section-label" style="margin-top:4px">Místo zápasu</div>
-            <select id="match-venue-select" style="margin-bottom:4px">
-              <option value="Hřiště v Lískovci">Hřiště v Lískovci</option>
-              <option value="Tělocvična Horničák">Tělocvična Horničák</option>
-            </select>
-            <button class="btn-sm" style="width:100%;margin-bottom:4px" onclick="saveMatchDatetime()">Uložit</button>
-            <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
-            <div class="admin-divider"></div>
-            <div class="section-label">Přidat hráče</div>
-            <div class="add-row">
-              <input type="text" id="new-player-input" placeholder="Jméno…" onkeydown="if(event.key==='Enter')adminAddPlayer()" style="margin-bottom:0" />
-              <input type="number" id="new-player-level" placeholder="Level" min="0" max="10" step="0.5" style="width:80px" />
-              <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
-            </div>
-            <div class="section-label" style="margin-bottom:6px">Spravovat hráče <span style="font-weight:400;text-transform:none;font-size:11px">(level editovatelný)</span></div>
-            <div id="admin-players-list"><div class="loading">Načítám…</div></div>
-            <div class="admin-divider"></div>
-            <button class="btn-reset" onclick="adminReset()">🗑 Resetovat všechna přihlášení</button>
-          </div>
+          <div class="section-label" style="margin-bottom:6px">Hráči & levely</div>
+          <div id="admin-players-list"><div class="loading">Načítám…</div></div>
+          <div class="admin-divider"></div>
+          <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- PAGE: LOS -->
-  <div id="pg-los" class="page">
-    <div id="los-public">
-      <!-- Zobrazí se výsledek losu pokud existuje -->
-      <div id="los-result-area"><div class="loading">Načítám výsledek losu…</div></div>
-    </div>
-    <!-- Admin tlačítka pro los — zobrazí se jen po odemčení -->
-    <div id="los-admin-area" style="display:none">
-      <div class="card" style="margin-top:1rem">
-        <div class="section-label" style="margin-bottom:10px">🎲 Spustit losování</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
-          Losování vezme hráče kteří řekli <strong>Jdu</strong>, náhodně je rozdělí do dvou vyvážených týmů
-          s ohledem na levely a historii kdo s kým hrál.
-        </p>
-        <button class="btn-los" onclick="spustLos()">🎲 Losovat týmy</button>
-        <button class="btn-los-save" id="btn-save-los" style="display:none" onclick="saveLos()">💾 Uložit výsledek losu</button>
-      </div>
-      <div class="card" style="margin-top:1rem">
-        <div class="section-label" style="margin-bottom:8px">Historie losování</div>
-        <div id="los-history"><div class="loading">Načítám…</div></div>
-      </div>
-    </div>
-  </div>
-
 </div>
 
 <script>
   // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_y9MR-PLatyZToB7oS1GzBg_ZDsDDA0m';
-  const ADMIN_PIN    = '1212';
+  const SUPABASE_URL = 'DOPLŇ_SUPABASE_URL';
+  const SUPABASE_KEY = 'DOPLŇ_SUPABASE_ANON_KEY';
+  const ADMIN_PIN    = '1234';
   // ============================================================
 
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  let currentDraft = null; // aktuální neulozeny los
 
-  // ---- NAV ----
-  function showPage(id, btn) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-    if (id === 'pg-los') { loadLosResult(); if (adminUnlocked) loadLosHistory(); }
-  }
-
-  // ---- SETTINGS ----
   async function loadSettings() {
-    const { data } = await sb.from('settings').select('key, value');
-    const cfg = {};
-    (data || []).forEach(r => cfg[r.key] = r.value);
-    document.getElementById('match-label').textContent = cfg['match_label'] || 'Nejbližší zápas';
-    const venueEl = document.getElementById('match-venue');
-    venueEl.textContent = cfg['match_venue'] ? '📍 ' + cfg['match_venue'] : '';
-    renderNextReset(cfg['match_datetime'] || null);
-    return cfg;
+    const {data} = await sb.from('settings').select('key,value');
+    const cfg={}; (data||[]).forEach(r=>cfg[r.key]=r.value);
+    document.getElementById('match-label').textContent = cfg['match_label']||'Nejbližší zápas';
+    document.getElementById('match-venue').textContent = cfg['match_venue']?'📍 '+cfg['match_venue']:'';
+    renderNextReset(cfg['match_datetime']||null);
   }
 
-  function renderNextReset(datetimeStr) {
-    const el = document.getElementById('next-reset');
-    if (!datetimeStr) { el.textContent = 'Datum zápasu není nastaveno.'; return; }
-    const resetTime = new Date(new Date(datetimeStr).getTime() + 4.5 * 60 * 60 * 1000);
-    el.textContent = 'Reset přihlášení: ' +
-      resetTime.toLocaleDateString('cs-CZ', { weekday:'short', day:'numeric', month:'numeric' }) +
-      ' v ' + resetTime.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+  function renderNextReset(dt) {
+    const el=document.getElementById('next-reset');
+    if(!dt){el.textContent='Datum zápasu není nastaveno.';return;}
+    const r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+    el.textContent='Reset přihlášení: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' v '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
   }
 
-  // ---- PLAYERS ----
   async function loadPlayers() {
-    const { data } = await sb.from('players').select('name').order('name');
-    const sel = document.getElementById('player-select');
-    sel.innerHTML = '<option value="">— vyber své jméno —</option>';
-    (data || []).forEach(p => {
-      const o = document.createElement('option');
-      o.value = o.textContent = p.name;
-      sel.appendChild(o);
-    });
+    const {data}=await sb.from('players').select('name').order('name');
+    const sel=document.getElementById('player-select');
+    sel.innerHTML='<option value="">— vyber své jméno —</option>';
+    (data||[]).forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p.name;sel.appendChild(o);});
   }
 
-  // ---- RSVP ----
   async function loadRsvp() {
-    const { data } = await sb.from('rsvp').select('player_name, going').order('updated_at', { ascending: false });
-    const rows = data || [];
-    const go   = rows.filter(r => r.going);
-    const nogo = rows.filter(r => !r.going);
-    document.getElementById('cnt-go').textContent = go.length;
-    const list = document.getElementById('rsvp-list');
-    if (!rows.length) { list.innerHTML = '<div class="empty">Zatím žádné odpovědi</div>'; return; }
-    list.innerHTML = [...go, ...nogo].map(r =>
-      `<div class="player-row">
-        <span class="player-name">${esc(r.player_name)}</span>
-        <span class="badge ${r.going ? 'badge-go' : 'badge-nogo'}">${r.going ? 'Jdu' : 'Nejdu'}</span>
-      </div>`
+    const {data}=await sb.from('rsvp').select('player_name,going').order('updated_at',{ascending:false});
+    const rows=data||[], go=rows.filter(r=>r.going), nogo=rows.filter(r=>!r.going);
+    document.getElementById('cnt-go').textContent=go.length;
+    const list=document.getElementById('rsvp-list');
+    if(!rows.length){list.innerHTML='<div class="empty">Zatím žádné odpovědi</div>';return;}
+    list.innerHTML=[...go,...nogo].map(r=>
+      `<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span>
+       <span class="badge ${r.going?'badge-go':'badge-nogo'}">${r.going?'Jdu':'Nejdu'}</span></div>`
     ).join('');
   }
 
   async function respond(going) {
-    const name = document.getElementById('player-select').value || document.getElementById('player-new').value.trim();
-    if (!name) { flash('Nejdřív vyber nebo napiš své jméno.', false); return; }
-    await sb.from('players').upsert({ name }, { onConflict: 'name', ignoreDuplicates: true });
-    const { error } = await sb.from('rsvp').upsert({ player_name: name, going, updated_at: new Date().toISOString() }, { onConflict: 'player_name' });
-    if (error) { flash('Chyba při ukládání. Zkus to znovu.', false); return; }
-    flash(going ? `Super, ${name} — těšíme se! 👍` : `Škoda, ${name} — příště snad!`, going);
-    document.getElementById('player-select').value = '';
-    document.getElementById('player-new').value = '';
+    const name=document.getElementById('player-select').value||document.getElementById('player-new').value.trim();
+    if(!name){flash('Nejdřív vyber nebo napiš své jméno.',false);return;}
+    await sb.from('players').upsert({name},{onConflict:'name',ignoreDuplicates:true});
+    const {error}=await sb.from('rsvp').upsert({player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'player_name'});
+    if(error){flash('Chyba při ukládání.',false);return;}
+    flash(going?`Super, ${name} — těšíme se! 👍`:`Škoda, ${name} — příště snad!`,going);
+    document.getElementById('player-select').value='';
+    document.getElementById('player-new').value='';
     await loadPlayers(); await loadRsvp();
   }
 
-  // ---- HELPERS ----
-  function flash(msg, ok) {
-    const el = document.getElementById('flash');
-    el.textContent = msg; el.className = 'flash show ' + (ok ? 'ok' : 'err');
-    setTimeout(() => el.classList.remove('show'), 4000);
+  sb.channel('rsvp').on('postgres_changes',{event:'*',schema:'public',table:'rsvp'},loadRsvp).subscribe();
+
+  function flash(msg,ok){
+    const el=document.getElementById('flash');
+    el.textContent=msg;el.className='flash show '+(ok?'ok':'err');
+    setTimeout(()=>el.classList.remove('show'),4000);
   }
-  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  sb.channel('rsvp-changes').on('postgres_changes', { event:'*', schema:'public', table:'rsvp' }, loadRsvp).subscribe();
-
-  // ---- ADMIN ----
-  let adminUnlocked = false;
-
-  function toggleAdminPanel() {
-    const panel = document.getElementById('admin-panel');
-    const isOpen = panel.classList.toggle('open');
-    document.getElementById('admin-toggle-btn').textContent = isOpen ? '✕ Zavřít' : '🔒 Admin';
-    if (!isOpen) lockAdmin();
+  function toggleAdmin(){
+    const panel=document.getElementById('admin-panel');
+    const open=panel.classList.toggle('open');
+    document.getElementById('admin-toggle-btn').textContent=open?'✕ Zavřít':'🔒 Admin';
+    if(!open)lockAdmin();
   }
 
-  function unlockAdmin() {
-    const pin = document.getElementById('admin-pin').value;
-    if (pin === ADMIN_PIN) {
-      adminUnlocked = true;
-      document.getElementById('admin-actions').style.display = 'block';
-      document.getElementById('los-admin-area').style.display = 'block';
-      document.getElementById('admin-pin').disabled = true;
-      document.getElementById('btn-unlock').textContent = '✓ Odemčeno';
-      document.getElementById('btn-unlock').style.color = 'var(--green)';
+  function unlockAdmin(){
+    if(document.getElementById('admin-pin').value===ADMIN_PIN){
+      document.getElementById('admin-actions').style.display='block';
+      document.getElementById('admin-pin').disabled=true;
+      document.getElementById('btn-unlock').textContent='✓ Odemčeno';
+      document.getElementById('btn-unlock').style.color='var(--green)';
       document.getElementById('pin-error').classList.remove('show');
-      loadAdminPlayers(); loadMatchDatetime(); loadLosHistory();
+      loadAdminPlayers(); loadMatchDatetime();
     } else {
       document.getElementById('pin-error').classList.add('show');
-      document.getElementById('admin-pin').value = '';
+      document.getElementById('admin-pin').value='';
     }
   }
 
-  function lockAdmin() {
-    adminUnlocked = false;
-    document.getElementById('admin-actions').style.display = 'none';
-    document.getElementById('los-admin-area').style.display = 'none';
-    document.getElementById('admin-pin').disabled = false;
-    document.getElementById('admin-pin').value = '';
-    document.getElementById('btn-unlock').textContent = 'Odemknout';
-    document.getElementById('btn-unlock').style.color = '';
+  function lockAdmin(){
+    document.getElementById('admin-actions').style.display='none';
+    document.getElementById('admin-pin').disabled=false;
+    document.getElementById('admin-pin').value='';
+    document.getElementById('btn-unlock').textContent='Odemknout';
+    document.getElementById('btn-unlock').style.color='';
     document.getElementById('pin-error').classList.remove('show');
-    document.getElementById('new-player-input').value = '';
-    currentDraft = null;
-    document.getElementById('btn-save-los').style.display = 'none';
   }
 
-  async function loadMatchDatetime() {
-    const { data } = await sb.from('settings').select('key, value').in('key', ['match_datetime', 'match_venue']);
-    const cfg = {}; (data || []).forEach(r => cfg[r.key] = r.value);
-    if (cfg['match_datetime']) { document.getElementById('match-datetime').value = cfg['match_datetime'].slice(0,16); updateResetInfo(cfg['match_datetime']); }
-    if (cfg['match_venue']) document.getElementById('match-venue-select').value = cfg['match_venue'];
+  async function loadMatchDatetime(){
+    const {data}=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
+    const cfg={}; (data||[]).forEach(r=>cfg[r.key]=r.value);
+    if(cfg['match_datetime']){document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);updateResetInfo(cfg['match_datetime']);}
+    if(cfg['match_venue']) document.getElementById('match-venue-sel').value=cfg['match_venue'];
   }
 
-  function updateResetInfo(datetimeStr) {
-    const resetTime = new Date(new Date(datetimeStr).getTime() + 4.5 * 60 * 60 * 1000);
-    document.getElementById('reset-info').textContent = 'Reset přihlášení proběhne: ' +
-      resetTime.toLocaleDateString('cs-CZ', { weekday:'short', day:'numeric', month:'numeric' }) +
-      ' v ' + resetTime.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
+  function updateResetInfo(dt){
+    const r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+    document.getElementById('reset-info').textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
   }
 
-  async function saveMatchDatetime() {
-    const val = document.getElementById('match-datetime').value;
-    const venue = document.getElementById('match-venue-select').value;
-    if (!val) { flash('Vyber datum a čas zápasu.', false); return; }
-    const dt = new Date(val);
-    const dayRaw = dt.toLocaleDateString('cs-CZ', { weekday:'long', day:'numeric', month:'numeric', year:'numeric' });
-    const dayCapitalized = dayRaw.charAt(0).toUpperCase() + dayRaw.slice(1);
-    const vikopStr = dt.toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    const srazStr  = new Date(dt.getTime() - 30*60000).toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    const losStr   = new Date(dt.getTime() - 60*60000).toLocaleTimeString('cs-CZ', { hour:'2-digit', minute:'2-digit' });
-    const label = dayCapitalized + '  ·  🎲 los ' + losStr + '  ·  🤝 sraz ' + srazStr + '  ·  ⚽ výkop ' + vikopStr;
-    await sb.from('settings').upsert({ key:'match_datetime', value:val },   { onConflict:'key' });
-    await sb.from('settings').upsert({ key:'match_label',    value:label }, { onConflict:'key' });
-    await sb.from('settings').upsert({ key:'match_venue',    value:venue }, { onConflict:'key' });
-    document.getElementById('match-label').textContent = label;
-    document.getElementById('match-venue').textContent = venue ? '📍 ' + venue : '';
-    updateResetInfo(val); renderNextReset(val); flash('Uloženo.', true);
+  async function saveMatchDatetime(){
+    const val=document.getElementById('match-datetime').value;
+    const venue=document.getElementById('match-venue-sel').value;
+    if(!val){flash('Vyber datum a čas.',false);return;}
+    const dt=new Date(val);
+    const dayRaw=dt.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+    const day=dayRaw.charAt(0).toUpperCase()+dayRaw.slice(1);
+    const vikop=dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    const sraz=new Date(dt.getTime()-30*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    const los=new Date(dt.getTime()-60*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    const label=day+'  ·  🎲 los '+los+'  ·  🤝 sraz '+sraz+'  ·  ⚽ výkop '+vikop;
+    await sb.from('settings').upsert({key:'match_datetime',value:val},{onConflict:'key'});
+    await sb.from('settings').upsert({key:'match_label',value:label},{onConflict:'key'});
+    await sb.from('settings').upsert({key:'match_venue',value:venue},{onConflict:'key'});
+    document.getElementById('match-label').textContent=label;
+    document.getElementById('match-venue').textContent=venue?'📍 '+venue:'';
+    updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
   }
 
-  async function loadAdminPlayers() {
-    const { data } = await sb.from('players').select('name, level').order('name');
-    const list = document.getElementById('admin-players-list');
-    if (!data || !data.length) { list.innerHTML = '<div class="empty">Žádní hráči</div>'; return; }
-    list.innerHTML = data.map(p =>
-      `<div class="admin-player-row">
-        <span class="pname">${esc(p.name)}</span>
-        <input type="number" class="level-input" value="${p.level || 0}" min="0" max="10" step="0.5"
-          onchange="updateLevel('${esc(p.name)}', this.value)" title="Level hráče" />
-        <button class="btn-remove" onclick="adminRemovePlayer('${esc(p.name)}')" title="Odebrat">✕</button>
+  async function loadAdminPlayers(){
+    const {data}=await sb.from('players').select('name,level').order('name');
+    const list=document.getElementById('admin-players-list');
+    if(!data||!data.length){list.innerHTML='<div class="empty">Žádní hráči</div>';return;}
+    list.innerHTML=data.map(p=>
+      `<div class="apr"><span class="pn">${esc(p.name)}</span>
+       <input type="number" class="sm" value="${p.level||0}" min="0" max="10" step="0.5"
+         onchange="updateLevel('${esc(p.name)}',this.value)" title="Level" />
+       <button class="btn-rm" onclick="adminRemovePlayer('${esc(p.name)}')" title="Odebrat">✕</button>
       </div>`
     ).join('');
   }
 
-  async function updateLevel(name, val) {
-    const level = parseFloat(val) || 0;
-    await sb.from('players').update({ level }).eq('name', name);
-  }
+  async function updateLevel(name,val){await sb.from('players').update({level:parseFloat(val)||0}).eq('name',name);}
 
-  async function adminAddPlayer() {
-    const name  = document.getElementById('new-player-input').value.trim();
-    const level = parseFloat(document.getElementById('new-player-level').value) || 0;
-    if (!name) return;
-    const { error } = await sb.from('players').insert({ name, level });
-    if (error) { flash('Hráč již existuje nebo chyba: ' + error.message, false); return; }
-    document.getElementById('new-player-input').value = '';
-    document.getElementById('new-player-level').value = '';
-    flash(`Hráč ${name} přidán (level ${level}).`, true);
+  async function adminAddPlayer(){
+    const name=document.getElementById('new-player-input').value.trim();
+    const level=parseFloat(document.getElementById('new-player-level').value)||0;
+    if(!name) return;
+    const {error}=await sb.from('players').insert({name,level});
+    if(error){flash('Hráč již existuje nebo chyba.',false);return;}
+    document.getElementById('new-player-input').value='';
+    document.getElementById('new-player-level').value='';
+    flash(`${name} přidán.`,true);
     await loadAdminPlayers(); await loadPlayers();
   }
 
-  async function adminRemovePlayer(name) {
-    const { error } = await sb.from('players').delete().eq('name', name);
-    if (error) { flash('Chyba: ' + error.message, false); return; }
-    flash(`Hráč ${name} odebrán.`, true);
+  async function adminRemovePlayer(name){
+    await sb.from('players').delete().eq('name',name);
+    flash(`${name} odebrán.`,true);
     await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
   }
 
-  async function adminReset() {
-    const { error } = await sb.from('rsvp').delete().neq('player_name', '___placeholder___');
-    if (error) { flash('Chyba při resetování: ' + error.message, false); return; }
-    flash('Přihlášení byla resetována.', true);
+  async function adminReset(){
+    await sb.from('rsvp').delete().neq('player_name','___x___');
+    flash('Přihlášení resetována.',true);
     lockAdmin();
     document.getElementById('admin-panel').classList.remove('open');
-    document.getElementById('admin-toggle-btn').textContent = '🔒 Admin';
+    document.getElementById('admin-toggle-btn').textContent='🔒 Admin';
     await loadRsvp();
   }
 
-  // ================================================================
-  // LOS — algoritmus
-  // ================================================================
-
-  async function spustLos() {
-    // Načti hráče kteří jdou + jejich levely
-    const { data: rsvpData } = await sb.from('rsvp').select('player_name').eq('going', true);
-    const names = (rsvpData || []).map(r => r.player_name);
-    if (names.length < 2) { flash('Potřeba alespoň 2 hráče kteří řekli Jdu.', false); return; }
-
-    const { data: playersData } = await sb.from('players').select('name, level').in('name', names);
-    const levelMap = {};
-    (playersData || []).forEach(p => levelMap[p.name] = parseFloat(p.level) || 0);
-
-    // Načti historii — kolikrát hrál každý pár ve stejném týmu
-    const { data: histData } = await sb.from('los_history').select('team_a, team_b');
-    const togetherCount = {}; // "A|B" => počet
-    (histData || []).forEach(h => {
-      const teamA = h.team_a || []; const teamB = h.team_b || [];
-      countPairs(teamA, togetherCount); countPairs(teamB, togetherCount);
-    });
-
-    // Najdi nejlepší rozdělení — Monte Carlo: 500 pokusů, vezmi nejlepší skóre
-    let best = null, bestScore = Infinity;
-    for (let i = 0; i < 500; i++) {
-      const shuffled = shuffle([...names]);
-      const half = Math.ceil(shuffled.length / 2);
-      const teamA = shuffled.slice(0, half);
-      const teamB = shuffled.slice(half);
-      const score = evaluateSplit(teamA, teamB, levelMap, togetherCount);
-      if (score < bestScore) { bestScore = score; best = { teamA, teamB }; }
-    }
-
-    currentDraft = { ...best, levelMap, score: bestScore };
-    renderLosResult(best.teamA, best.teamB, levelMap, bestScore, false);
-    document.getElementById('btn-save-los').style.display = 'block';
-  }
-
-  function countPairs(team, map) {
-    for (let i = 0; i < team.length; i++)
-      for (let j = i+1; j < team.length; j++) {
-        const key = [team[i], team[j]].sort().join('|');
-        map[key] = (map[key] || 0) + 1;
-      }
-  }
-
-  function pairScore(a, b, map) {
-    return map[[a,b].sort().join('|')] || 0;
-  }
-
-  function teamTogetherScore(team, map) {
-    let s = 0;
-    for (let i = 0; i < team.length; i++)
-      for (let j = i+1; j < team.length; j++)
-        s += pairScore(team[i], team[j], map);
-    return s;
-  }
-
-  function evaluateSplit(teamA, teamB, levelMap, togetherMap) {
-    const sumA = teamA.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const sumB = teamB.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const avgA = sumA / teamA.length;
-    const avgB = sumB / teamB.length;
-    const diffSum = Math.abs(sumA - sumB);
-    const diffAvg = Math.abs(avgA - avgB);
-    // Penalizace za opakování párů (aby se hráči střídali)
-    const togetherPenalty = teamTogetherScore(teamA, togetherMap) + teamTogetherScore(teamB, togetherMap);
-    // Váhy: součet levelů 40%, průměr 40%, rotace 20%
-    return diffSum * 0.4 + diffAvg * 4 + togetherPenalty * 0.2;
-  }
-
-  function shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i+1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-  }
-
-  function balanceScore(teamA, teamB, levelMap) {
-    const sumA = teamA.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const sumB = teamB.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const total = sumA + sumB;
-    if (!total) return 100;
-    const pct = Math.round((Math.min(sumA,sumB) / total) * 100);
-    return pct; // čím blíže 50 tím lepší
-  }
-
-  function renderLosResult(teamA, teamB, levelMap, rawScore, saved) {
-    const sumA = teamA.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const sumB = teamB.reduce((s,n) => s + (levelMap[n]||0), 0);
-    const avgA = sumA ? (sumA/teamA.length).toFixed(1) : '0';
-    const avgB = sumB ? (sumB/teamB.length).toFixed(1) : '0';
-    const total = sumA + sumB;
-    const balPct = total ? Math.round((Math.min(sumA,sumB)/total)*100) : 50;
-    const diff = Math.abs(sumA - sumB).toFixed(1);
-    const balClass = balPct >= 46 ? 'good' : balPct >= 40 ? 'ok' : 'bad';
-    const balLabel = balPct >= 46 ? '✅ Výborně vyváženo' : balPct >= 40 ? '⚠️ Přijatelné' : '❌ Nevyváženo';
-
-    const html = `
-      <div class="card" style="margin-bottom:1rem">
-        <div class="section-label" style="margin-bottom:10px">${saved ? '✅ Uložený los' : '🎲 Návrh losu'}</div>
-        <div class="score-row">
-          <div class="score-box"><div class="sv">${teamA.length} vs ${teamB.length}</div><div class="sl">počet hráčů</div></div>
-          <div class="score-box"><div class="sv">${sumA.toFixed(1)} / ${sumB.toFixed(1)}</div><div class="sl">součet levelů</div></div>
-          <div class="score-box"><div class="sv">${diff}</div><div class="sl">rozdíl levelů</div></div>
-        </div>
-        <div class="balance-bar">
-          <div class="balance-label"><span>${balLabel}</span><span>${balPct}% / ${100-balPct}%</span></div>
-          <div class="balance-track"><div class="balance-fill ${balClass}" style="width:${balPct}%"></div></div>
-        </div>
-        <div class="teams-grid">
-          <div class="team-card team-a">
-            <div class="team-title">Tým A</div>
-            <div class="team-sum">${sumA.toFixed(1)}</div>
-            <div class="team-avg">průměr ${avgA}</div>
-            ${teamA.map(n => `<div class="team-player"><span>${esc(n)}</span><span class="lvl">${levelMap[n]||0}</span></div>`).join('')}
-          </div>
-          <div class="team-card team-b">
-            <div class="team-title">Tým B</div>
-            <div class="team-sum">${sumB.toFixed(1)}</div>
-            <div class="team-avg">průměr ${avgB}</div>
-            ${teamB.map(n => `<div class="team-player"><span>${esc(n)}</span><span class="lvl">${levelMap[n]||0}</span></div>`).join('')}
-          </div>
-        </div>
-      </div>`;
-    document.getElementById('los-result-area').innerHTML = html;
-  }
-
-  async function saveLos() {
-    if (!currentDraft) return;
-    const { error } = await sb.from('los_history').insert({
-      team_a: currentDraft.teamA,
-      team_b: currentDraft.teamB,
-      match_date: new Date().toISOString()
-    });
-    if (error) { flash('Chyba při ukládání losu: ' + error.message, false); return; }
-    flash('Los uložen do historie!', true);
-    currentDraft = null;
-    document.getElementById('btn-save-los').style.display = 'none';
-    await loadLosResult();
-    await loadLosHistory();
-  }
-
-  async function loadLosResult() {
-    const { data } = await sb.from('los_history').select('*').order('created_at', { ascending:false }).limit(1);
-    const area = document.getElementById('los-result-area');
-    if (!data || !data.length) {
-      area.innerHTML = '<div class="los-waiting"><div class="icon">🎲</div><p>Los ještě nebyl spuštěn.<br>Výsledek se zobrazí zde.</p></div>';
-      return;
-    }
-    const last = data[0];
-    // Načti levely
-    const allNames = [...(last.team_a||[]), ...(last.team_b||[])];
-    const { data: pd } = await sb.from('players').select('name, level').in('name', allNames);
-    const lm = {}; (pd||[]).forEach(p => lm[p.name] = parseFloat(p.level)||0);
-    renderLosResult(last.team_a||[], last.team_b||[], lm, 0, true);
-  }
-
-  async function loadLosHistory() {
-    const { data } = await sb.from('los_history').select('*').order('created_at', { ascending:false }).limit(10);
-    const el = document.getElementById('los-history');
-    if (!data || !data.length) { el.innerHTML = '<div class="empty">Žádná historie</div>'; return; }
-    el.innerHTML = data.map(h => {
-      const d = new Date(h.created_at).toLocaleDateString('cs-CZ', { day:'numeric', month:'numeric', year:'numeric' });
-      const a = (h.team_a||[]).join(', ');
-      const b = (h.team_b||[]).join(', ');
-      return `<div class="history-row"><div class="history-date">${d}</div><div><strong>A:</strong> ${esc(a)}</div><div><strong>B:</strong> ${esc(b)}</div></div>`;
-    }).join('');
-  }
-
-  // Init
-  loadSettings(); loadPlayers(); loadRsvp(); loadLosResult();
+  loadSettings(); loadPlayers(); loadRsvp();
 </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
-    }
-  </script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js');
+  }
+</script>
 </body>
 </html>
