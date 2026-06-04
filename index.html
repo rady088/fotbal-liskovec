@@ -371,7 +371,20 @@
           <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 2</div>
           <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
         </div>
-        <button class="btn-sm" style="width:100%;margin-top:8px" onclick="saveSekaPere()">Uložit</button>
+        <button class="btn-sm" style="width:100%;margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit</button>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:8px">Evidence sekání / praní</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Po zápase zaznamenej kdo sekal/pral.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select id="evidence-hrac-sel" style="flex:1;margin-bottom:0"><option value="">— vyber hráče —</option></select>
+          <select id="evidence-typ-sel" style="flex:1;margin-bottom:0">
+            <option value="seka">Sekání</option>
+            <option value="prani">Praní</option>
+          </select>
+          <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
+        </div>
+        <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
+        <div id="evidence-list"><div class="loading">Načítám…</div></div>
       </div>
 
       <!-- Přidat akci -->
@@ -837,10 +850,12 @@ async function adminSaveAkce(){
   var editId=document.getElementById('akce-edit-id').value;
   if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
   if(editId){
-    await sb.from('akce').update({nazev,datum,popis}).eq('id',editId);
+    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',parseInt(editId));
+    if(upd.error){flash('Chyba: '+upd.error.message,false);return;}
     flash('Akce upravena!',true);
   } else {
-    await sb.from('akce').insert({nazev,datum,popis});
+    var ins=await sb.from('akce').insert({nazev:nazev,datum:datum,popis:popis});
+    if(ins.error){flash('Chyba: '+ins.error.message,false);return;}
     flash('Akce přidána!',true);
   }
   adminCancelEditAkce(); loadAdminAkce();
