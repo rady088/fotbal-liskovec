@@ -191,13 +191,13 @@
 
 <div class="container">
   <div id="flash" class="flash"></div>
-  <div class="match-card">
-    <div class="mdt" id="match-label">Načítám…</div>
-    <div class="mvn" id="match-venue"></div>
-  </div>
 
   <!-- PŘIHLÁSIT -->
   <div id="pg-prihlaseni" class="page active">
+    <div class="match-card">
+      <div class="mdt" id="match-label">Načítám…</div>
+      <div class="mvn" id="match-venue"></div>
+    </div>
     <div class="two-col">
       <div class="card">
         <div class="section-label">Hráč</div>
@@ -217,6 +217,10 @@
 
   <!-- LOS -->
   <div id="pg-los" class="page">
+    <div class="match-card">
+      <div class="mdt" id="match-label-los">Načítám…</div>
+      <div class="mvn" id="match-venue-los"></div>
+    </div>
     <div id="los-result-area"><div class="loading">Načítám…</div></div>
   </div>
 
@@ -472,8 +476,14 @@ function closeMore(){
 async function loadSettings(){
   var res=await sb.from('settings').select('key,value');
   var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
-  document.getElementById('match-label').textContent=cfg['match_label']||'Nejbližší zápas';
-  document.getElementById('match-venue').textContent=cfg['match_venue']?'📍 '+cfg['match_venue']:'';
+  var label=cfg['match_label']||'Nejbližší zápas';
+  var venue=cfg['match_venue']?'📍 '+cfg['match_venue']:'';
+  document.getElementById('match-label').textContent=label;
+  document.getElementById('match-venue').textContent=venue;
+  var losLabel=document.getElementById('match-label-los');
+  var losVenue=document.getElementById('match-venue-los');
+  if(losLabel) losLabel.textContent=label;
+  if(losVenue) losVenue.textContent=venue;
   renderNextReset(cfg['match_datetime']||null);
 }
 function renderNextReset(dt){
@@ -662,6 +672,10 @@ async function saveMatchDatetime(){
   await sb.from('settings').upsert({key:'match_venue',value:venue},{onConflict:'key'});
   document.getElementById('match-label').textContent=label;
   document.getElementById('match-venue').textContent=venue?'📍 '+venue:'';
+  var ll=document.getElementById('match-label-los');
+  var lv=document.getElementById('match-venue-los');
+  if(ll) ll.textContent=label;
+  if(lv) lv.textContent=venue?'📍 '+venue:'';
   updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
 }
 
