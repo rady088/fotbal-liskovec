@@ -7,7 +7,7 @@
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#1a5c2a"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-title" content="FK Lískovec"/>
   <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,60 +15,42 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --green:#1a5c2a;--green-dark:#154d23;--green-light:#e6f4ea;
-      --red:#c0392b;--red-light:#fde8e8;
+      --red:#c0392b;--red-light:#fde8e8;--blue:#1a3a6b;--blue-light:#e8eef8;
+      --orange:#e67e22;--yellow:#f1c40f;
       --bg:#f4f4f2;--surface:#fff;--border:rgba(0,0,0,0.1);
-      --text:#1a1a18;--text-muted:#6b6b67;--radius:12px;--radius-sm:8px;
-      --nav-h:60px;
+      --text:#1a1a18;--text-muted:#6b6b67;--radius:12px;--radius-sm:8px;--nav-h:60px;
     }
     @media(prefers-color-scheme:dark){
-      :root{--bg:#1a1a18;--surface:#242422;--border:rgba(255,255,255,0.1);--text:#e8e8e4;--text-muted:#9a9a94;--green-light:#0d2e14;--red-light:#2e0d0d;}
+      :root{--bg:#1a1a18;--surface:#242422;--border:rgba(255,255,255,0.1);--text:#e8e8e4;--text-muted:#9a9a94;--green-light:#0d2e14;--red-light:#2e0d0d;--blue-light:#0d1a2e;}
     }
-    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-    /* ── TOP NAV (desktop) ── */
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
     .top-nav{display:none;background:var(--green);overflow-x:auto}
     .top-nav-inner{display:flex;padding:0 .5rem;min-width:max-content}
     .top-tab{background:none;border:none;color:rgba(255,255,255,.65);padding:13px 14px;font-size:13px;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;font-family:inherit}
     .top-tab.active{color:#fff;border-bottom-color:#fff;font-weight:500}
-
-    /* ── BOTTOM NAV (mobile) ── */
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface);border-top:.5px solid var(--border);display:flex;z-index:100;safe-area-inset-bottom:env(safe-area-inset-bottom)}
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;height:var(--nav-h);background:var(--surface);border-top:.5px solid var(--border);display:flex;z-index:100}
     .bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;font-family:inherit;padding:6px 2px}
     .bottom-tab i{font-size:20px;color:var(--text-muted)}
     .bottom-tab span{font-size:10px;color:var(--text-muted)}
     .bottom-tab.active i,.bottom-tab.active span{color:var(--green)}
     .bottom-tab.active span{font-weight:500}
-
-    /* ── MORE MENU ── */
-    .more-menu{position:fixed;bottom:calc(var(--nav-h) + 8px);right:8px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:.5rem 0;z-index:200;display:none;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+    .more-menu{position:fixed;bottom:calc(var(--nav-h)+8px);right:8px;background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:.5rem 0;z-index:200;display:none;min-width:160px}
     .more-menu.open{display:block}
     .more-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:14px;cursor:pointer;color:var(--text)}
     .more-item:hover{background:var(--bg)}
     .more-item i{font-size:18px;color:var(--text-muted)}
-    .more-item.active{color:var(--green);font-weight:500}
-    .more-item.active i{color:var(--green)}
     .more-overlay{position:fixed;inset:0;z-index:150;display:none}
     .more-overlay.open{display:block}
-
-    @media(min-width:700px){
-      .top-nav{display:block}
-      .bottom-nav{display:none}
-    }
-
-    /* ── LAYOUT ── */
-    .container{max-width:960px;margin:0 auto;padding:1rem;padding-bottom:calc(var(--nav-h) + 1rem)}
+    @media(min-width:700px){.top-nav{display:block}.bottom-nav{display:none}}
+    .container{max-width:960px;margin:0 auto;padding:1rem;padding-bottom:calc(var(--nav-h)+1rem)}
     @media(min-width:700px){.container{padding-bottom:1rem}}
     .page{display:none}.page.active{display:block}
     .card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}
     @media(max-width:600px){.two-col{grid-template-columns:1fr}}
-
-    /* ── MATCH CARD ── */
     .match-card{background:var(--green);border-radius:var(--radius);padding:1rem 1.25rem;margin-bottom:1rem}
     .match-card .mdt{color:#fff;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:3px}
     .match-card .mvn{color:rgba(255,255,255,.7);font-size:13px}
-
-    /* ── INPUTS ── */
     .section-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
     select,input[type="text"],input[type="password"],input[type="datetime-local"],input[type="number"],textarea{
       width:100%;padding:14px;border:.5px solid var(--border);border-radius:var(--radius-sm);
@@ -76,27 +58,19 @@
     textarea{resize:vertical;min-height:80px;line-height:1.5}
     input[type="number"].sm{padding:7px 8px;font-size:13px;margin-bottom:0;width:65px}
     select:focus,input:focus,textarea:focus{outline:2px solid var(--green);outline-offset:1px}
-
-    /* ── BUTTONS ── */
     .btn-go{width:100%;padding:20px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:19px;font-weight:700;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:8px}
     .btn-go:hover{background:var(--green-dark)}
     .btn-nogo{width:70%;margin:0 auto;padding:9px;background:var(--surface);color:var(--text-muted);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
-    .btn-nogo:hover{background:var(--bg)}
     .btn-primary{width:100%;padding:12px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px}
     .btn-primary:hover{background:var(--green-dark)}
     .btn-outline{width:100%;padding:11px;background:var(--surface);color:var(--green);border:1.5px solid var(--green);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer}
-    .btn-outline:hover{background:var(--green-light)}
     .btn-sm{padding:7px 12px;background:var(--surface);color:var(--text);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;white-space:nowrap}
     .btn-sm:hover{background:var(--green-light);color:var(--green)}
     .btn-danger{width:100%;padding:11px;background:var(--red-light);color:var(--red);border:.5px solid rgba(192,57,43,.2);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer}
-
-    /* ── FLASH ── */
     .flash{border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:1rem;display:none}
     .flash.show{display:block}
     .flash.ok{background:var(--green-light);color:var(--green)}
     .flash.err{background:var(--red-light);color:var(--red)}
-
-    /* ── RSVP ── */
     .single-metric{text-align:center;padding:.75rem .5rem 1rem}
     .single-metric .num{font-size:48px;font-weight:700;line-height:1;color:var(--green)}
     .single-metric .lbl{font-size:13px;color:var(--text-muted);margin-top:4px}
@@ -105,14 +79,13 @@
     .badge-go{background:var(--green-light);color:var(--green)}
     .badge-nogo{background:var(--red-light);color:var(--red)}
     .next-reset{font-size:12px;color:var(--text-muted);text-align:center;margin-top:.75rem}
-
-    /* ── ADMIN ── */
+    /* ADMIN */
     .pin-wrap{padding:2rem 1rem;text-align:center}
     .pin-wrap h3{font-size:16px;font-weight:500;margin-bottom:1rem}
     .pin-row{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px}
     .pin-row input{width:130px;margin-bottom:0;letter-spacing:.3em;text-align:center;font-size:20px}
-    .pin-error{font-size:12px;color:var(--red);margin-bottom:8px;display:none}
-    .pin-error.show{display:block;text-align:center}
+    .pin-error{font-size:12px;color:var(--red);margin-bottom:8px;display:none;text-align:center}
+    .pin-error.show{display:block}
     .admin-divider{height:.5px;background:var(--border);margin:14px 0}
     .apr{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);border:.5px solid var(--border);margin-bottom:5px;background:var(--surface);font-size:13px}
     .apr .pn{flex:1;font-weight:500}
@@ -121,16 +94,13 @@
     .add-row{display:flex;gap:6px;margin-bottom:10px;align-items:center}
     .add-row input{flex:1;margin-bottom:0}
     .info-box{font-size:12px;color:var(--text-muted);background:var(--bg);border-radius:var(--radius-sm);padding:8px 10px;margin-top:6px;line-height:1.5}
-
-    /* ── LOS ── */
-    .los-waiting{text-align:center;padding:3rem 1rem;color:var(--text-muted)}
-    .los-waiting .icon{font-size:48px;margin-bottom:1rem}
+    /* LOS */
     .teams-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
     @media(max-width:500px){.teams-grid{grid-template-columns:1fr}}
     .team-card{border-radius:var(--radius);padding:1rem}
-    .team-a{background:linear-gradient(135deg,#1a5c2a,#2d8a45);color:#fff}
+    .team-a{background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff}
     .team-b{background:linear-gradient(135deg,#1a3a6b,#2d5fa8);color:#fff}
-    .team-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.75;margin-bottom:.5rem}
+    .team-title{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin-bottom:.5rem}
     .team-sum{font-size:28px;font-weight:700;line-height:1;margin-bottom:.2rem}
     .team-avg{font-size:13px;opacity:.75;margin-bottom:.75rem}
     .team-player{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:14px}
@@ -147,8 +117,11 @@
     .score-box .sl{font-size:11px;color:var(--text-muted);margin-top:2px}
     .hist-row{padding:8px 10px;border-radius:var(--radius-sm);border:.5px solid var(--border);margin-bottom:5px;font-size:13px}
     .hist-date{font-size:11px;color:var(--text-muted);margin-bottom:3px}
-
-    /* ── POŘADÍ ── */
+    .seka-card{background:linear-gradient(135deg,#f39c12,#e67e22);border-radius:var(--radius);padding:1rem;color:#fff;margin-bottom:1rem}
+    .seka-title{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;opacity:.8;margin-bottom:.25rem}
+    .seka-name{font-size:22px;font-weight:700}
+    .seka-sub{font-size:12px;opacity:.8;margin-top:3px}
+    /* POŘADÍ */
     .standings-table{width:100%;border-collapse:collapse;font-size:13px}
     .standings-table thead tr{background:var(--green);color:#fff}
     .standings-table th{padding:9px 10px;text-align:center;font-weight:600;font-size:12px;white-space:nowrap}
@@ -161,46 +134,45 @@
     .r1{background:#ffd700;color:#7a5900}.r2{background:#c0c0c0;color:#444}.r3{background:#cd7f32;color:#5a2800}.rn{background:var(--bg);color:var(--text-muted)}
     .row-gold{background:#fffbe6}.row-orange{background:#fef0e0}.row-lgreen{background:#f0f9f2}.row-red{background:#fff0f0}
     @media(prefers-color-scheme:dark){.row-gold{background:#2a2500}.row-orange{background:#2e1a08}.row-lgreen{background:#0d2e14}.row-red{background:#2e0d0d}}
-
-    /* ── AKCE ── */
+    /* AKCE */
     .akce-card{border:.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;background:var(--surface)}
-    .akce-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+    .akce-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
     .akce-title{font-size:16px;font-weight:500}
     .akce-date{font-size:12px;color:var(--text-muted);margin-bottom:8px}
     .akce-desc{font-size:14px;color:var(--text-muted);line-height:1.5;margin-bottom:12px}
-    .akce-footer{display:flex;align-items:center;justify-content:space-between}
-    .akce-count{font-size:12px;color:var(--text-muted)}
-    .akce-btns{display:flex;gap:8px}
-    .btn-akce-go{padding:7px 16px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer}
-    .btn-akce-nogo{padding:7px 16px;background:var(--surface);color:var(--text-muted);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer}
-    .akce-empty{text-align:center;padding:3rem 1rem;color:var(--text-muted)}
     .akce-tag{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
     .akce-tag-future{background:var(--green-light);color:var(--green)}
     .akce-tag-past{background:var(--bg);color:var(--text-muted)}
-
-    /* ── PRAVIDLA ── */
-    .rules-content{font-size:14px;line-height:1.7;color:var(--text)}
-    .rules-content h3{font-size:15px;font-weight:600;margin:1.5rem 0 .5rem;color:var(--text)}
+    .btn-akce-go{padding:9px 16px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer}
+    .btn-akce-nogo{padding:9px 16px;background:var(--surface);color:var(--text-muted);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer}
+    /* PRAVIDLA */
+    .rules-content{font-size:14px;line-height:1.7}
+    .rules-content h3{font-size:15px;font-weight:600;margin:1.5rem 0 .5rem}
     .rules-content p{margin-bottom:.75rem}
-    .rules-content ul{padding-left:1.25rem;margin-bottom:.75rem}
-    .rules-content li{margin-bottom:.4rem}
     .rules-content strong{font-weight:600}
-    .rules-content .highlight{background:var(--green-light);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:500}
-
-    /* ── ARCHIV ── */
+    .highlight{background:var(--green-light);color:var(--green);padding:2px 6px;border-radius:4px;font-weight:500}
+    /* ARCHIV */
     .archiv-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:.5px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer}
     .archiv-item:hover{background:var(--bg)}
     .archiv-item .ai-title{font-weight:500;font-size:14px}
     .archiv-item .ai-sub{font-size:12px;color:var(--text-muted);margin-top:2px}
-
+    /* VÝSLEDEK */
+    .vysledek-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--radius-sm);border:.5px solid var(--border);margin-bottom:5px;font-size:13px}
+    .vysledek-row .vname{flex:1;font-weight:500}
+    .postih-sel{padding:5px 8px;font-size:12px;margin-bottom:0;width:auto}
+    .postih-a{background:#fff3cd;color:#856404}
+    .postih-b{background:#fff0e0;color:#7a3b0a}
+    .postih-c{background:#fde8e8;color:#c0392b}
     .empty{text-align:center;padding:1.5rem;color:var(--text-muted);font-size:13px}
     .loading{text-align:center;padding:1rem;color:var(--text-muted);font-size:13px}
     .divider{height:.5px;background:var(--border);margin:1rem 0}
+    .tag-badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;display:inline-block}
+    .tag-a{background:#fff3cd;color:#856404}
+    .tag-b{background:#fff0e0;color:#7a3b0a}
+    .tag-c{background:#fde8e8;color:#c0392b}
   </style>
 </head>
 <body>
-
-<!-- TOP NAV (desktop) -->
 <nav class="top-nav">
   <div class="top-nav-inner">
     <button class="top-tab active" onclick="showPage('pg-prihlaseni',this)">⚽ Přihlásit</button>
@@ -215,13 +187,12 @@
 
 <div class="container">
   <div id="flash" class="flash"></div>
-
   <div class="match-card">
     <div class="mdt" id="match-label">Načítám…</div>
     <div class="mvn" id="match-venue"></div>
   </div>
 
-  <!-- ══ PŘIHLÁSIT ══ -->
+  <!-- PŘIHLÁSIT -->
   <div id="pg-prihlaseni" class="page active">
     <div class="two-col">
       <div class="card">
@@ -233,25 +204,22 @@
       </div>
       <div class="card">
         <div class="section-label">Přehled hráčů</div>
-        <div class="single-metric">
-          <div class="num" id="cnt-go">–</div>
-          <div class="lbl">hráčů potvrdilo účast</div>
-        </div>
+        <div class="single-metric"><div class="num" id="cnt-go">–</div><div class="lbl">hráčů potvrdilo účast</div></div>
         <div id="rsvp-list"><div class="loading">Načítám…</div></div>
         <div class="next-reset" id="next-reset"></div>
       </div>
     </div>
   </div>
 
-  <!-- ══ LOS ══ -->
+  <!-- LOS -->
   <div id="pg-los" class="page">
     <div id="los-result-area"><div class="loading">Načítám…</div></div>
     <div id="los-admin-panel" style="display:none">
       <div class="card">
         <div class="section-label" style="margin-bottom:10px">Losování</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Algoritmus vezme hráče kteří řekli <strong>Jdu</strong> a rozdělí je do dvou co nejvyváženějších týmů podle levelů a s ohledem na historii.</p>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
         <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
-        <button class="btn-outline" id="btn-save-los" style="display:none" onclick="saveLos()">💾 Uložit výsledek</button>
+        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
       </div>
       <div class="card">
         <div class="section-label" style="margin-bottom:8px">Historie losování</div>
@@ -260,13 +228,12 @@
     </div>
   </div>
 
-  <!-- ══ POŘADÍ ══ -->
+  <!-- POŘADÍ -->
   <div id="pg-poradi" class="page">
     <div class="card" style="padding:0;overflow:hidden">
       <table class="standings-table">
         <thead><tr>
-          <th style="width:36px">#</th>
-          <th>Hráč</th>
+          <th style="width:36px">#</th><th>Hráč</th>
           <th title="Součet pořadí ve 3 žebříčcích">Součet ①</th>
           <th title="Žebříček účast">Zeb.Účast ②</th>
           <th title="Žebříček body">Zeb.Body ③</th>
@@ -279,35 +246,32 @@
     <p style="font-size:12px;color:var(--text-muted);padding:.25rem">Pořadí se zobrazuje od 3. zápasu. Nižší součet = lepší.</p>
   </div>
 
-  <!-- ══ AKCE ══ -->
+  <!-- AKCE -->
   <div id="pg-akce" class="page">
     <div id="akce-list"><div class="loading">Načítám…</div></div>
   </div>
 
-  <!-- ══ PRAVIDLA ══ -->
+  <!-- PRAVIDLA -->
   <div id="pg-pravidla" class="page">
     <div class="card rules-content">
       <h3>1. Aktivita a postup do žebříčku</h3>
       <p>Kdo nebude mít alespoň <strong>2 aktivity (sekání + praní; brigáda)</strong> za novou + poslední sezónu a nebude mít letos účast aspoň <strong>60%</strong>, ten je poslední ve všech žebříčcích. Aktivity z loňské sezóny se propíšou, pořadí sekání jde od nejmenšího počtu.</p>
-
       <h3>2. Celkové pořadí</h3>
       <p>Celkové pořadí se skládá ze součtu pořadí ze <strong>3 různých žebříčků: Počet účasti, součet bodů a plus/minus</strong> (průměr za zápas).</p>
       <p><strong>Bodování:</strong> 3b výhra, 2b remíza, 1b prohra pro ty, co jsou <span class="highlight">včas zapsáni a jsou na hřišti celý zápas</span>. 0b neúčast.</p>
       <p>V případě stejného součtu v celkovém žebříčku rozhoduje: a) počet účasti, b) počet bodů, c) +/-.</p>
       <p><strong>Nejlepší a nejhorší výsledek (body a +/-) se škrtá.</strong> Tzn pořadí se zobrazí až po 3. zápase.</p>
-
       <h3>3. Postihy</h3>
       <p><strong>3.a</strong> Přijdu na hřiště po výkopu nebo odejdu ze hřiště před koncem zápasu, včetně zranění (ale jsem včas zapsán) – v žebříčku bodů zapíši <strong>2.5b</strong> pokud vyhraju, <strong>1.5b</strong> za remízu, <strong>0.5b</strong> za prohru.</p>
       <p><strong>3.b</strong> Přijdu, ale nejsem včas zapsán <em>(půjdu do týmu, který má méně lidí; při stejném počtu do týmu který prohrává)</em> – v žebříčku bodů zapíši <strong>0.25b</strong> bez ohledu na výsledek, v žebříčku plus/minus zapíši stejně jako poražený tým.</p>
       <p><strong>3.c</strong> Nepřijdu a jsem zapsán (a neomluvím se včas) – v žebříčku bodů zapíši <strong>-1b</strong> a v plus/minus skóre poraženého týmu.</p>
       <p><span class="highlight">Včas = konec zapisování, 1h před výkopem.</span></p>
-
       <h3>4. Los a praní</h3>
       <p>Při losování se určí hráč na praní. Pokud nemůže, tak se <strong>sám proaktivně před fotbalem domluví s někým z náhradníků</strong>. Pokud to neudělá a <strong>nevezme klíče/navleky po fotbale</strong>, tak postih podle bodu 3c.</p>
     </div>
   </div>
 
-  <!-- ══ ARCHIV ══ -->
+  <!-- ARCHIV -->
   <div id="pg-archiv" class="page">
     <div class="card">
       <div class="section-label" style="margin-bottom:12px">Předchozí sezóny</div>
@@ -326,7 +290,7 @@
     </div>
   </div>
 
-  <!-- ══ ADMIN ══ -->
+  <!-- ADMIN -->
   <div id="pg-admin" class="page">
     <div id="admin-pin-screen" class="card pin-wrap">
       <h3>🔒 Admin přístup</h3>
@@ -338,8 +302,9 @@
       </div>
       <div class="pin-error" id="pin-error">Špatný PIN</div>
     </div>
-
     <div id="admin-content" style="display:none">
+
+      <!-- Zápas -->
       <div class="card">
         <div class="section-label">Zápas</div>
         <input type="datetime-local" id="match-datetime" style="margin-bottom:6px"/>
@@ -352,12 +317,52 @@
         <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
       </div>
 
+      <!-- Výsledek zápasu -->
+      <div class="card">
+        <div class="section-label">Zadat výsledek zápasu</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Tým A (Navleky)</div>
+            <input type="number" id="skore-a" min="0" value="0" style="text-align:center;font-size:22px;font-weight:700;padding:10px;margin-bottom:0"/>
+          </div>
+          <div style="font-size:24px;color:var(--text-muted);padding-top:20px">:</div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Tým B</div>
+            <input type="number" id="skore-b" min="0" value="0" style="text-align:center;font-size:22px;font-weight:700;padding:10px;margin-bottom:0"/>
+          </div>
+        </div>
+        <div class="section-label" style="margin-bottom:6px">Postihy hráčů</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">a = přišel pozdě/odešel dříve · b = přišel nezapsaný · c = nepřišel a byl zapsán</p>
+        <div id="postihy-list"><div class="loading">Načti los pro zobrazení hráčů</div></div>
+        <div style="margin-top:12px">
+          <button class="btn-primary" onclick="ulozitVysledek()">💾 Uložit výsledek zápasu</button>
+        </div>
+      </div>
+
+      <!-- Seka/Pere -->
+      <div class="card">
+        <div class="section-label">Seka / Pere</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Kdo je zodpovědný za praní dresů a sekání hřiště.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Seka/Pere</div>
+          <select id="seka-pere-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 1</div>
+          <select id="nahradnik1-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 2</div>
+          <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+        </div>
+        <button class="btn-sm" style="width:100%;margin-top:8px" onclick="saveSekaPere()">Uložit</button>
+      </div>
+
+      <!-- Přidat akci -->
       <div class="card">
         <div class="section-label" id="akce-form-label">Přidat akci</div>
         <input type="hidden" id="akce-edit-id" value=""/>
-        <input type="text" id="akce-nazev" placeholder="Název akce (brigáda, zakončení...)" style="margin-bottom:8px"/>
-        <input type="datetime-local" id="akce-datum" style="margin-bottom:8px"/>
-        <textarea id="akce-popis" placeholder="Popis akce…" style="margin-bottom:8px"></textarea>
+        <input type="text" id="akce-nazev" placeholder="Název akce (brigáda, zakončení...)"/>
+        <input type="datetime-local" id="akce-datum"/>
+        <textarea id="akce-popis" placeholder="Popis akce…"></textarea>
         <div style="display:flex;gap:8px">
           <button class="btn-primary" style="flex:1" onclick="adminSaveAkce()">💾 Uložit akci</button>
           <button class="btn-sm" id="akce-cancel-btn" onclick="adminCancelEditAkce()" style="display:none">Zrušit</button>
@@ -367,11 +372,11 @@
         <div id="admin-akce-list"><div class="loading">Načítám…</div></div>
       </div>
 
+      <!-- Hráči -->
       <div class="card">
         <div class="section-label">Přidat hráče</div>
         <div class="add-row">
-          <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0"
-            onkeydown="if(event.key==='Enter')adminAddPlayer()"/>
+          <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0" onkeydown="if(event.key==='Enter')adminAddPlayer()"/>
           <input type="number" id="new-player-level" placeholder="Lvl" min="0" max="10" step="0.5" class="sm"/>
           <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
         </div>
@@ -382,16 +387,12 @@
       <div class="card">
         <div class="section-label" style="margin-bottom:8px">Nebezpečná zóna</div>
         <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
-        <div style="margin-top:8px">
-          <button class="btn-sm" style="width:100%;color:var(--text-muted)" onclick="lockAdmin()">Zamknout admin</button>
-        </div>
+        <div style="margin-top:8px"><button class="btn-sm" style="width:100%;color:var(--text-muted)" onclick="lockAdmin()">Zamknout admin</button></div>
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav">
   <button class="bottom-tab active" onclick="showPage('pg-prihlaseni',this)" data-page="pg-prihlaseni">
     <i class="ti ti-check" aria-hidden="true"></i><span>Přihlásit</span>
@@ -409,482 +410,590 @@
     <i class="ti ti-dots" aria-hidden="true"></i><span>Více</span>
   </button>
 </nav>
-
-<!-- MORE MENU -->
 <div class="more-overlay" id="more-overlay" onclick="closeMore()"></div>
 <div class="more-menu" id="more-menu">
-  <div class="more-item" onclick="showPage('pg-pravidla');closeMore()">
-    <i class="ti ti-file-text" aria-hidden="true"></i> Pravidla
-  </div>
-  <div class="more-item" onclick="showPage('pg-archiv');closeMore()">
-    <i class="ti ti-archive" aria-hidden="true"></i> Archiv
-  </div>
-  <div class="more-item" onclick="showPage('pg-admin');closeMore()">
-    <i class="ti ti-lock" aria-hidden="true"></i> Admin
-  </div>
+  <div class="more-item" onclick="showPage('pg-pravidla');closeMore()"><i class="ti ti-file-text" aria-hidden="true"></i>Pravidla</div>
+  <div class="more-item" onclick="showPage('pg-archiv');closeMore()"><i class="ti ti-archive" aria-hidden="true"></i>Archiv</div>
+  <div class="more-item" onclick="showPage('pg-admin');closeMore()"><i class="ti ti-lock" aria-hidden="true"></i>Admin</div>
 </div>
 
 <script>
-  // ============================================================
-  const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbWlvZXhhYXZpa3RhcmxibGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODkzMDMsImV4cCI6MjA5NDk2NTMwM30.KXIsB3wvUq79D-jbn6XPbhoUraQAz9-HcUuj7VMx0kc';
-  const ADMIN_PIN    = '1234';
-  // ============================================================
+var SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbWlvZXhhYXZpa3RhcmxibGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODkzMDMsImV4cCI6MjA5NDk2NTMwM30.KXIsB3wvUq79D-jbn6XPbhoUraQAz9-HcUuj7VMx0kc';
+var ADMIN_PIN = '1234';
+var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var adminUnlocked = false;
+var currentDraft = null;
+var playersList = [];
+var currentLos = null; // uložený los pro zadání výsledku
 
-  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  var adminUnlocked = false;
-  var currentDraft  = null;
+// Výchozí levely hráčů
+var DEFAULT_LEVELS = {
+  'Bedin':5.5,'Jenda':3.5,'Jura T.':6,'Libor':4.5,'Majkl B.':1.5,
+  'Mary':7,'Mira':6,'Ml. Beza':4.5,'Nena':3,'Oswald':6,'Oule':5,
+  'Pavel':4,'Rene':6,'Robin':4,'Rosta':0.5,'Telo':1.5,'Toflik':2,
+  'Vadim':2,'Vasa':6,'Vita':5,'Vlada Pis':5,'Vlastik':1.5,'Vojta':5.5,'Zdena Ch.':5
+};
 
-  // ── NAV ──────────────────────────────────────────────────────
-  function showPage(id, btn) {
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    // bottom tabs
-    document.querySelectorAll('.bottom-tab').forEach(b=>b.classList.remove('active'));
-    if(btn && btn.dataset && btn.dataset.page) btn.classList.add('active');
-    // top tabs
-    document.querySelectorAll('.top-tab').forEach(b=>b.classList.remove('active'));
-    if(btn && btn.classList.contains('top-tab')) btn.classList.add('active');
-    // load page data
-    if(id==='pg-poradi') renderPoradi();
-    if(id==='pg-los'){ loadLosResult(); if(adminUnlocked) loadLosHistory(); }
-    if(id==='pg-akce') loadAkce();
-    if(id==='pg-admin' && adminUnlocked) loadAdminData();
-    window.scrollTo(0,0);
+// ── NAV ──────────────────────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.bottom-tab').forEach(b=>b.classList.remove('active'));
+  if(btn && btn.dataset && btn.dataset.page) btn.classList.add('active');
+  document.querySelectorAll('.top-tab').forEach(b=>b.classList.remove('active'));
+  if(btn && btn.classList && btn.classList.contains('top-tab')) btn.classList.add('active');
+  if(id==='pg-poradi') renderPoradi();
+  if(id==='pg-los'){ loadLosResult(); if(adminUnlocked) loadLosHistory(); }
+  if(id==='pg-akce') loadAkce();
+  if(id==='pg-admin' && adminUnlocked) loadAdminData();
+  window.scrollTo(0,0);
+}
+function toggleMore(){
+  document.getElementById('more-menu').classList.toggle('open');
+  document.getElementById('more-overlay').classList.toggle('open');
+}
+function closeMore(){
+  document.getElementById('more-menu').classList.remove('open');
+  document.getElementById('more-overlay').classList.remove('open');
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────
+async function loadSettings(){
+  var res=await sb.from('settings').select('key,value');
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  document.getElementById('match-label').textContent=cfg['match_label']||'Nejbližší zápas';
+  document.getElementById('match-venue').textContent=cfg['match_venue']?'📍 '+cfg['match_venue']:'';
+  renderNextReset(cfg['match_datetime']||null);
+}
+function renderNextReset(dt){
+  var el=document.getElementById('next-reset');
+  if(!dt){el.textContent='Datum zápasu není nastaveno.';return;}
+  var r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+  el.textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── PLAYERS ───────────────────────────────────────────────────
+async function loadPlayers(){
+  var res=await sb.from('players').select('name').order('name');
+  playersList=(res.data||[]).map(p=>p.name);
+  var sel=document.getElementById('player-select');
+  sel.innerHTML='<option value="">— vyber své jméno —</option>';
+  playersList.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;sel.appendChild(o);});
+}
+
+// ── RSVP ──────────────────────────────────────────────────────
+async function loadRsvp(){
+  var res=await sb.from('rsvp').select('player_name,going').order('updated_at',{ascending:false});
+  var rows=res.data||[], go=rows.filter(r=>r.going), nogo=rows.filter(r=>!r.going);
+  document.getElementById('cnt-go').textContent=go.length;
+  var list=document.getElementById('rsvp-list');
+  if(!rows.length){list.innerHTML='<div class="empty">Zatím žádné odpovědi</div>';return;}
+  list.innerHTML=[...go,...nogo].map(r=>
+    '<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span>'+
+    '<span class="badge '+(r.going?'badge-go':'badge-nogo')+'">'+(r.going?'Jdu':'Nejdu')+'</span></div>'
+  ).join('');
+}
+async function respond(going){
+  var name=document.getElementById('player-select').value||document.getElementById('player-new').value.trim();
+  if(!name){flash('Nejdřív vyber nebo napiš své jméno.',false);return;}
+  await sb.from('players').upsert({name},{onConflict:'name',ignoreDuplicates:true});
+  var res=await sb.from('rsvp').upsert({player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'player_name'});
+  if(res.error){flash('Chyba při ukládání.',false);return;}
+  flash(going?'Super, '+name+' — těšíme se! 👍':'Škoda, '+name+' — příště snad!',going);
+  document.getElementById('player-select').value='';
+  document.getElementById('player-new').value='';
+  await loadPlayers(); await loadRsvp();
+}
+sb.channel('rsvp').on('postgres_changes',{event:'*',schema:'public',table:'rsvp'},loadRsvp).subscribe();
+
+// ── POŘADÍ ────────────────────────────────────────────────────
+async function loadStats(){
+  var res=await sb.from('match_stats').select('*');
+  if(!res.data||!res.data.length) return {};
+  var agg={};
+  res.data.forEach(function(r){
+    if(!agg[r.player_name]) agg[r.player_name]={ucast:0,body:0,plus_minus:0};
+    agg[r.player_name].ucast++;
+    agg[r.player_name].body+=(r.body||0);
+    agg[r.player_name].plus_minus+=(r.plus_minus||0);
+  });
+  return agg;
+}
+function rankArr(arr,fn,asc){
+  var s=[...arr].sort((a,b)=>asc?fn(a)-fn(b):fn(b)-fn(a));
+  var r=1; s.forEach(function(x,i){if(i>0&&fn(s[i])===fn(s[i-1]))x._r=s[i-1]._r;else x._r=r;r++;});
+  return s;
+}
+function rowClass(rank,total){
+  if(rank===1) return 'row-gold';
+  if(rank<=Math.ceil(total*.25)) return 'row-orange';
+  if(rank>=total-Math.floor(total*.2)) return 'row-red';
+  return 'row-lgreen';
+}
+async function renderPoradi(){
+  var stats=await loadStats();
+  var arr=Object.entries(stats).map(function(e){return Object.assign({name:e[0]},e[1]);});
+  if(!arr.length){document.getElementById('poradi-body').innerHTML='<tr><td colspan="7" class="empty">Žádná data.</td></tr>';return;}
+  var tg=await sb.from('matches').select('*',{count:'exact',head:true});
+  var totalGames=tg.count||0;
+  rankArr(arr,function(s){return s.ucast;},false).forEach(function(s){s.zebUcast=s._r;});
+  rankArr(arr,function(s){return s.body;},false).forEach(function(s){s.zebBody=s._r;});
+  rankArr(arr,function(s){return s.plus_minus;},false).forEach(function(s){s.zebPM=s._r;});
+  arr.forEach(function(s){s.soucet=(s.zebUcast||0)+(s.zebBody||0)+(s.zebPM||0);});
+  arr.sort((a,b)=>a.soucet-b.soucet);
+  var fr=1;
+  arr.forEach(function(s,i){if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
+  var total=arr.length;
+  document.getElementById('poradi-body').innerHTML=arr.map(function(s){
+    var rc=rowClass(s.rank,total);
+    var rb='<span class="rank-badge '+(s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn')+'">'+s.rank+'</span>';
+    var ap=totalGames>0&&s.ucast/totalGames>0.6;
+    return '<tr class="'+rc+'"><td>'+rb+'</td><td>'+esc(s.name)+'</td><td><strong>'+s.soucet+'</strong></td><td>'+(s.zebUcast||'—')+'</td><td>'+(s.zebBody||'—')+'</td><td>'+(s.zebPM||'—')+'</td>'+
+      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td></tr>';
+  }).join('');
+}
+
+// ── AKCE ──────────────────────────────────────────────────────
+async function loadAkce(){
+  var res=await sb.from('akce').select('*').order('datum',{ascending:true});
+  var list=document.getElementById('akce-list');
+  if(!res.data||!res.data.length){
+    list.innerHTML='<div class="akce-empty empty"><p style="margin-top:1rem">Zatím žádné akce.<br>Admin přidá první akci.</p></div>';
+    return;
   }
+  var allIds=res.data.map(a=>a.id);
+  var rsvpRes=await sb.from('akce_rsvp').select('akce_id,player_name,going').in('akce_id',allIds);
+  var rsvpMap={};
+  (rsvpRes.data||[]).forEach(function(r){if(!rsvpMap[r.akce_id])rsvpMap[r.akce_id]=[];rsvpMap[r.akce_id].push(r);});
+  var now=new Date();
+  var playerOpts=playersList.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  list.innerHTML=res.data.map(function(a){
+    var d=new Date(a.datum), past=d<now;
+    var dateStr=d.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    var rsvps=rsvpMap[a.id]||[];
+    var goList=rsvps.filter(r=>r.going), nogoList=rsvps.filter(r=>!r.going);
+    var rows=goList.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-go">Jdu</span></div>').join('')+
+      nogoList.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-nogo">Nejdu</span></div>').join('');
+    return '<div class="akce-card" id="akce-'+a.id+'">'+
+      '<div class="akce-header"><div class="akce-title">'+esc(a.nazev)+'</div>'+
+      '<span class="akce-tag '+(past?'akce-tag-past':'akce-tag-future')+'">'+(past?'Proběhlo':'Nadcházející')+'</span></div>'+
+      '<div class="akce-date">📅 '+dateStr+'</div>'+
+      (a.popis?'<div class="akce-desc">'+esc(a.popis)+'</div>':'')+
+      (!past?'<div style="margin-bottom:12px"><select id="akce-sel-'+a.id+'" style="margin-bottom:8px"><option value="">— vyber své jméno —</option>'+playerOpts+'</select>'+
+        '<div style="display:flex;gap:8px"><button class="btn-akce-go" style="flex:1" onclick="respondAkce('+a.id+',true)">✓ Zúčastním se</button>'+
+        '<button class="btn-akce-nogo" style="flex:1;padding:9px" onclick="respondAkce('+a.id+',false)">✕ Nezúčastním se</button></div></div>':'')+
+      '<div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px" id="akce-lbl-'+a.id+'">Účastníci ('+goList.length+' jdou · '+nogoList.length+' nejdou)</div>'+
+      '<div id="akce-participants-'+a.id+'">'+(rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>')+'</div></div>';
+  }).join('');
+}
+async function respondAkce(akceId,going){
+  var sel=document.getElementById('akce-sel-'+akceId);
+  var name=sel?sel.value:'';
+  if(!name){flash('Nejdřív vyber své jméno.',false);return;}
+  await sb.from('akce_rsvp').upsert({akce_id:akceId,player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'akce_id,player_name'});
+  flash(going?'Super, '+name+' — těšíme se!':'Škoda, '+name+' — příště snad!',going);
+  var res=await sb.from('akce_rsvp').select('player_name,going').eq('akce_id',akceId);
+  var goL=(res.data||[]).filter(r=>r.going), nogoL=(res.data||[]).filter(r=>!r.going);
+  var rows=goL.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-go">Jdu</span></div>').join('')+
+    nogoL.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-nogo">Nejdu</span></div>').join('');
+  var el=document.getElementById('akce-participants-'+akceId);
+  var lbl=document.getElementById('akce-lbl-'+akceId);
+  if(el) el.innerHTML=rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>';
+  if(lbl) lbl.textContent='Účastníci ('+goL.length+' jdou · '+nogoL.length+' nejdou)';
+}
 
-  function toggleMore(){
-    document.getElementById('more-menu').classList.toggle('open');
-    document.getElementById('more-overlay').classList.toggle('open');
-    document.getElementById('btn-more').classList.toggle('active');
-  }
-  function closeMore(){
-    document.getElementById('more-menu').classList.remove('open');
-    document.getElementById('more-overlay').classList.remove('open');
-    document.getElementById('btn-more').classList.remove('active');
-  }
-
-  // ── SETTINGS ─────────────────────────────────────────────────
-  async function loadSettings() {
-    const {data}=await sb.from('settings').select('key,value');
-    const cfg={}; (data||[]).forEach(r=>cfg[r.key]=r.value);
-    document.getElementById('match-label').textContent=cfg['match_label']||'Nejbližší zápas';
-    document.getElementById('match-venue').textContent=cfg['match_venue']?'📍 '+cfg['match_venue']:'';
-    renderNextReset(cfg['match_datetime']||null);
-  }
-
-  function renderNextReset(dt){
-    const el=document.getElementById('next-reset');
-    if(!dt){el.textContent='Datum zápasu není nastaveno.';return;}
-    const r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
-    el.textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-  }
-
-  // ── PLAYERS ───────────────────────────────────────────────────
-  async function loadPlayers(){
-    const {data}=await sb.from('players').select('name').order('name');
-    const sel=document.getElementById('player-select');
-    sel.innerHTML='<option value="">— vyber své jméno —</option>';
-    (data||[]).forEach(p=>{const o=document.createElement('option');o.value=o.textContent=p.name;sel.appendChild(o);});
-  }
-
-  // ── RSVP ──────────────────────────────────────────────────────
-  async function loadRsvp(){
-    const {data}=await sb.from('rsvp').select('player_name,going').order('updated_at',{ascending:false});
-    const rows=data||[], go=rows.filter(r=>r.going), nogo=rows.filter(r=>!r.going);
-    document.getElementById('cnt-go').textContent=go.length;
-    const list=document.getElementById('rsvp-list');
-    if(!rows.length){list.innerHTML='<div class="empty">Zatím žádné odpovědi</div>';return;}
-    list.innerHTML=[...go,...nogo].map(r=>
-      `<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span>
-       <span class="badge ${r.going?'badge-go':'badge-nogo'}">${r.going?'Jdu':'Nejdu'}</span></div>`
-    ).join('');
-  }
-
-  async function respond(going){
-    const name=document.getElementById('player-select').value||document.getElementById('player-new').value.trim();
-    if(!name){flash('Nejdřív vyber nebo napiš své jméno.',false);return;}
-    await sb.from('players').upsert({name},{onConflict:'name',ignoreDuplicates:true});
-    const {error}=await sb.from('rsvp').upsert({player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'player_name'});
-    if(error){flash('Chyba při ukládání.',false);return;}
-    flash(going?`Super, ${name} — těšíme se! 👍`:`Škoda, ${name} — příště snad!`,going);
-    document.getElementById('player-select').value='';
-    document.getElementById('player-new').value='';
-    await loadPlayers(); await loadRsvp();
-  }
-
-  sb.channel('rsvp').on('postgres_changes',{event:'*',schema:'public',table:'rsvp'},loadRsvp).subscribe();
-
-  // ── POŘADÍ ────────────────────────────────────────────────────
-  async function loadStats(){
-    const {data}=await sb.from('match_stats').select('*');
-    if(!data||!data.length) return {};
-    const agg={};
-    data.forEach(r=>{
-      if(!agg[r.player_name]) agg[r.player_name]={ucast:0,body:0,plus_minus:0};
-      agg[r.player_name].ucast++;
-      agg[r.player_name].body+=(r.body||0);
-      agg[r.player_name].plus_minus+=(r.plus_minus||0);
-    });
-    return agg;
-  }
-
-  function rankArr(arr,fn,asc){
-    const s=[...arr].sort((a,b)=>asc?fn(a)-fn(b):fn(b)-fn(a));
-    let r=1; s.forEach((x,i)=>{if(i>0&&fn(s[i])===fn(s[i-1]))x._r=s[i-1]._r;else x._r=r;r++;});
-    return s;
-  }
-
-  function rowClass(rank,total){
-    if(rank===1) return 'row-gold';
-    if(rank<=Math.ceil(total*.25)) return 'row-orange';
-    if(rank>=total-Math.floor(total*.2)) return 'row-red';
-    return 'row-lgreen';
-  }
-
-  async function renderPoradi(){
-    const stats=await loadStats();
-    const arr=Object.entries(stats).map(([name,s])=>({name,...s}));
-    if(!arr.length){
-      document.getElementById('poradi-body').innerHTML='<tr><td colspan="7" class="empty">Žádná data.</td></tr>';
-      return;
-    }
-    const {count:totalGames}=await sb.from('matches').select('*',{count:'exact',head:true});
-    rankArr(arr,s=>s.ucast,false).forEach(s=>s.zebUcast=s._r);
-    rankArr(arr,s=>s.body,false).forEach(s=>s.zebBody=s._r);
-    rankArr(arr,s=>s.plus_minus,false).forEach(s=>s.zebPM=s._r);
-    arr.forEach(s=>s.soucet=(s.zebUcast||0)+(s.zebBody||0)+(s.zebPM||0));
-    arr.sort((a,b)=>a.soucet-b.soucet);
-    let fr=1;
-    arr.forEach((s,i)=>{if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
-    const total=arr.length;
-    document.getElementById('poradi-body').innerHTML=arr.map(s=>{
-      const rc=rowClass(s.rank,total);
-      const rb=`<span class="rank-badge ${s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn'}">${s.rank}</span>`;
-      const ap=(totalGames||0)>0&&s.ucast/(totalGames||1)>0.6;
-      return `<tr class="${rc}"><td>${rb}</td><td>${esc(s.name)}</td><td><strong>${s.soucet}</strong></td><td>${s.zebUcast||'—'}</td><td>${s.zebBody||'—'}</td><td>${s.zebPM||'—'}</td><td style="color:${ap?'var(--green)':'var(--red)'};font-weight:500">${s.ucast}</td></tr>`;
-    }).join('');
-  }
-
-  // ── AKCE ──────────────────────────────────────────────────────
-  var playersList = [];
-
-  async function loadAkce(){
-    const {data}=await sb.from('akce').select('*').order('datum',{ascending:true});
-    const list=document.getElementById('akce-list');
-    if(!data||!data.length){
-      list.innerHTML='<div class="akce-empty"><i class="ti ti-speakerphone" style="font-size:40px;color:var(--text-muted);display:block;margin-bottom:12px" aria-hidden="true"></i><p>Zatím žádné akce.<br>Admin přidá první akci.</p></div>';
-      return;
-    }
-    // Načti hráče pro selecty
-    const {data:pd}=await sb.from('players').select('name').order('name');
-    playersList=(pd||[]).map(p=>p.name);
-
-    const now=new Date();
-    const allIds=data.map(a=>a.id);
-    const {data:allRsvp}=await sb.from('akce_rsvp').select('akce_id,player_name,going').in('akce_id',allIds);
-    const rsvpMap={};
-    (allRsvp||[]).forEach(r=>{if(!rsvpMap[r.akce_id])rsvpMap[r.akce_id]=[];rsvpMap[r.akce_id].push(r);});
-
-    list.innerHTML=data.map(a=>{
-      const d=new Date(a.datum);
-      const past=d<now;
-      const dateStr=d.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-      const rsvps=rsvpMap[a.id]||[];
-      const goList=rsvps.filter(r=>r.going);
-      const nogoList=rsvps.filter(r=>!r.going);
-      const rows=goList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-go">Jdu</span></div>`).join('')+
-        nogoList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-nogo">Nejdu</span></div>`).join('');
-      const playerOpts=playersList.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
-      return `<div class="akce-card" id="akce-${a.id}">
-        <div class="akce-header">
-          <div class="akce-title">${esc(a.nazev)}</div>
-          <span class="akce-tag ${past?'akce-tag-past':'akce-tag-future'}">${past?'Proběhlo':'Nadcházející'}</span>
-        </div>
-        <div class="akce-date">📅 ${dateStr}</div>
-        ${a.popis?`<div class="akce-desc">${esc(a.popis)}</div>`:''}
-        ${!past?`<div style="margin-bottom:12px">
-          <select id="akce-sel-${a.id}" style="margin-bottom:8px"><option value="">— vyber své jméno —</option>${playerOpts}</select>
-          <div style="display:flex;gap:8px">
-            <button class="btn-akce-go" style="flex:1" onclick="respondAkce(${a.id},true)">✓ Zúčastním se</button>
-            <button class="btn-akce-nogo" style="flex:1;padding:7px" onclick="respondAkce(${a.id},false)">✕ Nezúčastním se</button>
-          </div>
-        </div>`:''}
-        <div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px" id="akce-lbl-${a.id}">Účastníci (${goList.length} jdou · ${nogoList.length} nejdou)</div>
-        <div id="akce-participants-${a.id}">${rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>'}</div>
-      </div>`;
-    }).join('');
-  }
-
-  async function respondAkce(akceId, going){
-    const sel=document.getElementById(`akce-sel-${akceId}`);
-    const name=sel?sel.value:'';
-    if(!name){flash('Nejdřív vyber své jméno.',false);return;}
-    await sb.from('akce_rsvp').upsert({akce_id:akceId,player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'akce_id,player_name'});
-    flash(going?`Super, ${name} — těšíme se!`:`Škoda, ${name} — příště snad!`,going);
-    // Obnovit účastníky
-    const {data}=await sb.from('akce_rsvp').select('player_name,going').eq('akce_id',akceId);
-    const goList=(data||[]).filter(r=>r.going);
-    const nogoList=(data||[]).filter(r=>!r.going);
-    const rows=goList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-go">Jdu</span></div>`).join('')+
-      nogoList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-nogo">Nejdu</span></div>`).join('');
-    const el=document.getElementById(`akce-participants-${akceId}`);
-    const lbl=document.getElementById(`akce-lbl-${akceId}`);
-    if(el) el.innerHTML=rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>';
-    if(lbl) lbl.textContent=`Účastníci (${goList.length} jdou · ${nogoList.length} nejdou)`;
-  }
-
-  // ── ADMIN ─────────────────────────────────────────────────────
-  function unlockAdmin(){
-    if(document.getElementById('admin-pin').value===ADMIN_PIN){
-      adminUnlocked=true;
-      document.getElementById('admin-pin-screen').style.display='none';
-      document.getElementById('admin-content').style.display='block';
-      loadAdminData();
-    } else {
-      document.getElementById('pin-error').classList.add('show');
-      document.getElementById('admin-pin').value='';
-    }
-  }
-
-  function lockAdmin(){
-    adminUnlocked=false;
-    document.getElementById('admin-pin-screen').style.display='block';
-    document.getElementById('admin-content').style.display='none';
+// ── ADMIN ─────────────────────────────────────────────────────
+function unlockAdmin(){
+  if(document.getElementById('admin-pin').value===ADMIN_PIN){
+    adminUnlocked=true;
+    document.getElementById('admin-pin-screen').style.display='none';
+    document.getElementById('admin-content').style.display='block';
+    document.getElementById('los-admin-panel').style.display='block';
+    loadAdminData();
+  } else {
+    document.getElementById('pin-error').classList.add('show');
     document.getElementById('admin-pin').value='';
-    document.getElementById('pin-error').classList.remove('show');
-    showPage('pg-prihlaseni');
+  }
+}
+function lockAdmin(){
+  adminUnlocked=false;
+  document.getElementById('admin-pin-screen').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  document.getElementById('los-admin-panel').style.display='none';
+  document.getElementById('admin-pin').value='';
+  document.getElementById('pin-error').classList.remove('show');
+  showPage('pg-prihlaseni');
+}
+async function loadAdminData(){
+  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm();
+}
+async function loadMatchDatetime(){
+  var res=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  if(cfg['match_datetime']){document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);updateResetInfo(cfg['match_datetime']);}
+  if(cfg['match_venue']) document.getElementById('match-venue-sel').value=cfg['match_venue'];
+}
+function updateResetInfo(dt){
+  var r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+  document.getElementById('reset-info').textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+}
+async function saveMatchDatetime(){
+  var val=document.getElementById('match-datetime').value;
+  var venue=document.getElementById('match-venue-sel').value;
+  if(!val){flash('Vyber datum a čas.',false);return;}
+  var dt=new Date(val);
+  var dayRaw=dt.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  var day=dayRaw.charAt(0).toUpperCase()+dayRaw.slice(1);
+  var vikop=dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var sraz=new Date(dt.getTime()-30*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var los=new Date(dt.getTime()-60*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var label=day+'  ·  🎲 los '+los+'  ·  🤝 sraz '+sraz+'  ·  ⚽ výkop '+vikop;
+  await sb.from('settings').upsert({key:'match_datetime',value:val},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'match_label',value:label},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'match_venue',value:venue},{onConflict:'key'});
+  document.getElementById('match-label').textContent=label;
+  document.getElementById('match-venue').textContent=venue?'📍 '+venue:'';
+  updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
+}
+
+// ── SEKA/PERE ─────────────────────────────────────────────────
+async function loadSekaPere(){
+  var res=await sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']);
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  var opts='<option value="">— vyber —</option>'+playersList.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  ['seka-pere-sel','nahradnik1-sel','nahradnik2-sel'].forEach(function(id){
+    document.getElementById(id).innerHTML=opts;
+  });
+  if(cfg['seka_pere']) document.getElementById('seka-pere-sel').value=cfg['seka_pere'];
+  if(cfg['nahradnik1']) document.getElementById('nahradnik1-sel').value=cfg['nahradnik1'];
+  if(cfg['nahradnik2']) document.getElementById('nahradnik2-sel').value=cfg['nahradnik2'];
+}
+async function saveSekaPere(){
+  var s=document.getElementById('seka-pere-sel').value;
+  var n1=document.getElementById('nahradnik1-sel').value;
+  var n2=document.getElementById('nahradnik2-sel').value;
+  await sb.from('settings').upsert({key:'seka_pere',value:s},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'nahradnik1',value:n1},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'nahradnik2',value:n2},{onConflict:'key'});
+  flash('Seka/Pere uloženo.',true);
+}
+
+// ── VÝSLEDEK ZÁPASU ───────────────────────────────────────────
+async function loadPostihyForm(){
+  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
+  var list=document.getElementById('postihy-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Nejprve proveď losování.</div>';return;}
+  var last=res.data[0];
+  currentLos=last;
+  var allPlayers=[...(last.team_a||[]),...(last.team_b||[])];
+  list.innerHTML=allPlayers.map(function(name,i){
+    var team=i<(last.team_a||[]).length?'A':'B';
+    return '<div class="vysledek-row">'+
+      '<span class="vname">'+esc(name)+'</span>'+
+      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Tým '+team+'</span>'+
+      '<select class="postih-sel" id="postih-'+esc(name).replace(/ /g,'_')+'">'+
+        '<option value="">—</option>'+
+        '<option value="a">postih a</option>'+
+        '<option value="b">postih b</option>'+
+        '<option value="c">postih c</option>'+
+      '</select></div>';
+  }).join('');
+}
+
+async function ulozitVysledek(){
+  if(!currentLos){flash('Nejprve proveď losování.',false);return;}
+  var skoreA=parseInt(document.getElementById('skore-a').value)||0;
+  var skoreB=parseInt(document.getElementById('skore-b').value)||0;
+  var teamA=currentLos.team_a||[], teamB=currentLos.team_b||[];
+
+  // Výsledek pro každý tým
+  var vysledekA=skoreA>skoreB?'w':skoreA===skoreB?'d':'l';
+  var vysledekB=skoreB>skoreA?'w':skoreA===skoreB?'d':'l';
+  var pmA=skoreA-skoreB, pmB=skoreB-skoreA;
+  var bodyVyhraA=vysledekA==='w'?3:vysledekA==='d'?2:1;
+  var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
+
+  // Ulož zápas
+  var matchRes=await sb.from('matches').insert({match_date:new Date().toISOString(),score_t1:skoreA,score_t2:skoreB});
+  if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
+  var matchId=matchRes.data&&matchRes.data[0]&&matchRes.data[0].id;
+
+  // Ulož statistiky hráčů
+  var stats=[];
+  function getPostih(name){return document.getElementById('postih-'+name.replace(/ /g,'_')+'')&&document.getElementById('postih-'+name.replace(/ /g,'_')+'').value||'';}
+
+  function calcBody(postih, body, vysledek){
+    if(postih==='a') return vysledek==='w'?2.5:vysledek==='d'?1.5:0.5;
+    if(postih==='b') return 0.25;
+    if(postih==='c') return -1;
+    return body;
+  }
+  function calcPM(postih, pm, porazenPM){
+    if(postih==='b'||postih==='c') return porazenPM;
+    return pm;
   }
 
-  async function loadAdminData(){
-    loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce();
+  teamA.forEach(function(name){
+    var postih=getPostih(name);
+    var body=calcBody(postih,bodyVyhraA,vysledekA);
+    var pm=calcPM(postih,pmA,pmB);
+    stats.push({match_id:matchId,player_name:name,team:1,body,plus_minus:pm,postih:postih||null});
+  });
+  teamB.forEach(function(name){
+    var postih=getPostih(name);
+    var body=calcBody(postih,bodyVyhraB,vysledekB);
+    var pm=calcPM(postih,pmB,pmA);
+    stats.push({match_id:matchId,player_name:name,team:2,body,plus_minus:pm,postih:postih||null});
+  });
+
+  await sb.from('match_stats').insert(stats);
+  flash('Výsledek uložen! Skóre '+skoreA+':'+skoreB,true);
+  document.getElementById('skore-a').value=0;
+  document.getElementById('skore-b').value=0;
+}
+
+// ── ADMIN AKCE ────────────────────────────────────────────────
+async function adminSaveAkce(){
+  var nazev=document.getElementById('akce-nazev').value.trim();
+  var datum=document.getElementById('akce-datum').value;
+  var popis=document.getElementById('akce-popis').value.trim();
+  var editId=document.getElementById('akce-edit-id').value;
+  if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
+  if(editId){
+    await sb.from('akce').update({nazev,datum,popis}).eq('id',editId);
+    flash('Akce upravena!',true);
+  } else {
+    await sb.from('akce').insert({nazev,datum,popis});
+    flash('Akce přidána!',true);
+  }
+  adminCancelEditAkce(); loadAdminAkce();
+}
+function adminCancelEditAkce(){
+  document.getElementById('akce-nazev').value='';
+  document.getElementById('akce-datum').value='';
+  document.getElementById('akce-popis').value='';
+  document.getElementById('akce-edit-id').value='';
+  document.getElementById('akce-form-label').textContent='Přidat akci';
+  document.getElementById('akce-cancel-btn').style.display='none';
+}
+function adminEditAkce(id,nazev,datum,popis){
+  document.getElementById('akce-edit-id').value=id;
+  document.getElementById('akce-nazev').value=nazev;
+  document.getElementById('akce-datum').value=datum.slice(0,16);
+  document.getElementById('akce-popis').value=popis||'';
+  document.getElementById('akce-form-label').textContent='Upravit akci';
+  document.getElementById('akce-cancel-btn').style.display='inline-block';
+  document.getElementById('akce-nazev').focus();
+  window.scrollTo(0,0);
+}
+async function adminDeleteAkce(id,nazev){
+  await sb.from('akce').delete().eq('id',id);
+  flash('Akce "'+nazev+'" smazána.',true);
+  loadAdminAkce();
+}
+async function loadAdminAkce(){
+  var res=await sb.from('akce').select('*').order('datum',{ascending:false});
+  var list=document.getElementById('admin-akce-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Žádné akce</div>';return;}
+  list.innerHTML=res.data.map(function(a){
+    var d=new Date(a.datum);
+    var dateStr=d.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    var ne=esc(a.nazev), pe=esc(a.popis||''), de=a.datum||'';
+    return '<div class="apr"><div style="flex:1"><div class="pn">'+ne+'</div><div style="font-size:11px;color:var(--text-muted)">'+dateStr+'</div></div>'+
+      '<button class="btn-sm" style="padding:4px 8px;font-size:12px" onclick="adminEditAkce('+a.id+',\''+ne.replace(/'/g,"&#39;")+'\',\''+de+'\',\''+pe.replace(/'/g,"&#39;")+'\')">✏️</button>'+
+      '<button class="btn-rm" onclick="adminDeleteAkce('+a.id+',\''+ne.replace(/'/g,"&#39;")+'\')">✕</button></div>';
+  }).join('');
+}
+
+// ── ADMIN PLAYERS ─────────────────────────────────────────────
+async function loadAdminPlayers(){
+  var res=await sb.from('players').select('name,level').order('name');
+  var list=document.getElementById('admin-players-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Žádní hráči</div>';return;}
+  list.innerHTML=res.data.map(function(p){
+    return '<div class="apr"><span class="pn">'+esc(p.name)+'</span>'+
+      '<input type="number" class="sm" value="'+(p.level||0)+'" min="0" max="10" step="0.5" onchange="updateLevel(\''+esc(p.name)+'\',this.value)" title="Level"/>'+
+      '<button class="btn-rm" onclick="adminRemovePlayer(\''+esc(p.name)+'\')">✕</button></div>';
+  }).join('');
+}
+async function updateLevel(name,val){await sb.from('players').update({level:parseFloat(val)||0}).eq('name',name);}
+async function adminAddPlayer(){
+  var name=document.getElementById('new-player-input').value.trim();
+  var level=parseFloat(document.getElementById('new-player-level').value)||0;
+  if(!name) return;
+  var res=await sb.from('players').insert({name,level});
+  if(res.error){flash('Hráč již existuje nebo chyba.',false);return;}
+  document.getElementById('new-player-input').value='';
+  document.getElementById('new-player-level').value='';
+  flash(name+' přidán.',true);
+  await loadAdminPlayers(); await loadPlayers();
+}
+async function adminRemovePlayer(name){
+  await sb.from('players').delete().eq('name',name);
+  flash(name+' odebrán.',true);
+  await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
+}
+async function adminReset(){
+  await sb.from('rsvp').delete().neq('player_name','___x___');
+  flash('Přihlášení resetována.',true);
+  await loadRsvp();
+}
+
+// ── LOS ALGORITMUS ────────────────────────────────────────────
+async function spustLos(){
+  var rsvpRes=await sb.from('rsvp').select('player_name').eq('going',true);
+  var names=(rsvpRes.data||[]).map(r=>r.player_name);
+  if(names.length<4){flash('Potřeba alespoň 4 hráče.',false);return;}
+
+  var pRes=await sb.from('players').select('name,level').in('name',names);
+  var lm={};
+  (pRes.data||[]).forEach(function(p){lm[p.name]=parseFloat(p.level)||0;});
+  // doplň default levely pokud chybí
+  names.forEach(function(n){if(!lm[n])lm[n]=DEFAULT_LEVELS[n]||3;});
+
+  var histRes=await sb.from('los_history').select('team_a,team_b');
+  var tog={};
+  (histRes.data||[]).forEach(function(h){cP(h.team_a||[],tog);cP(h.team_b||[],tog);});
+
+  var best=null, bestScore=Infinity;
+  for(var i=0;i<1000;i++){
+    var sh=shuf([...names]);
+    // Zajisti stejný počet hráčů (rozdíl max 1)
+    var half=Math.round(sh.length/2);
+    var a=sh.slice(0,half), b=sh.slice(half);
+    var s=evalS(a,b,lm,tog);
+    if(s<bestScore){bestScore=s;best={a,b};}
   }
 
-  async function loadMatchDatetime(){
-    const {data}=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
-    const cfg={}; (data||[]).forEach(r=>cfg[r.key]=r.value);
-    if(cfg['match_datetime']){document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);updateResetInfo(cfg['match_datetime']);}
-    if(cfg['match_venue']) document.getElementById('match-venue-sel').value=cfg['match_venue'];
-  }
+  currentDraft={teamA:best.a,teamB:best.b,lm};
+  renderLos(best.a,best.b,lm,false);
+  document.getElementById('btn-save-los').style.display='block';
+}
 
-  function updateResetInfo(dt){
-    const r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
-    document.getElementById('reset-info').textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-  }
-
-  async function saveMatchDatetime(){
-    const val=document.getElementById('match-datetime').value;
-    const venue=document.getElementById('match-venue-sel').value;
-    if(!val){flash('Vyber datum a čas.',false);return;}
-    const dt=new Date(val);
-    const dayRaw=dt.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
-    const day=dayRaw.charAt(0).toUpperCase()+dayRaw.slice(1);
-    const vikop=dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-    const sraz=new Date(dt.getTime()-30*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-    const los=new Date(dt.getTime()-60*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-    const label=day+'  ·  🎲 los '+los+'  ·  🤝 sraz '+sraz+'  ·  ⚽ výkop '+vikop;
-    await sb.from('settings').upsert({key:'match_datetime',value:val},{onConflict:'key'});
-    await sb.from('settings').upsert({key:'match_label',value:label},{onConflict:'key'});
-    await sb.from('settings').upsert({key:'match_venue',value:venue},{onConflict:'key'});
-    document.getElementById('match-label').textContent=label;
-    document.getElementById('match-venue').textContent=venue?'📍 '+venue:'';
-    updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
-  }
-
-  async function adminSaveAkce(){
-    const nazev=document.getElementById('akce-nazev').value.trim();
-    const datum=document.getElementById('akce-datum').value;
-    const popis=document.getElementById('akce-popis').value.trim();
-    const editId=document.getElementById('akce-edit-id').value;
-    if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
-    if(editId){
-      await sb.from('akce').update({nazev,datum,popis}).eq('id',editId);
-      flash('Akce upravena!',true);
-    } else {
-      await sb.from('akce').insert({nazev,datum,popis});
-      flash('Akce přidána!',true);
+function cP(team,map){
+  for(var i=0;i<team.length;i++)
+    for(var j=i+1;j<team.length;j++){
+      var k=[team[i],team[j]].sort().join('|');
+      map[k]=(map[k]||0)+1;
     }
-    adminCancelEditAkce();
-    loadAdminAkce();
-  }
+}
+function tPen(team,map){
+  var s=0;
+  for(var i=0;i<team.length;i++)
+    for(var j=i+1;j<team.length;j++)
+      s+=(map[[team[i],team[j]].sort().join('|')]||0);
+  return s;
+}
+function levelGroup(lvl){
+  if(lvl>=6) return 'high';
+  if(lvl>=3) return 'mid';
+  return 'low';
+}
+function groupDiff(a,b,lm){
+  var ga={high:0,mid:0,low:0}, gb={high:0,mid:0,low:0};
+  a.forEach(function(n){ga[levelGroup(lm[n]||0)]++;});
+  b.forEach(function(n){gb[levelGroup(lm[n]||0)]++;});
+  return Math.abs(ga.high-gb.high)+Math.abs(ga.mid-gb.mid)+Math.abs(ga.low-gb.low);
+}
+function evalS(a,b,lm,tog){
+  var sa=a.reduce(function(s,n){return s+(lm[n]||0);},0);
+  var sb2=b.reduce(function(s,n){return s+(lm[n]||0);},0);
+  var countDiff=Math.abs(a.length-b.length)*10; // penalizace za různý počet
+  var sumDiff=Math.abs(sa-sb2)*0.5;
+  var avgDiff=Math.abs(sa/a.length-sb2/b.length)*3;
+  var grpDiff=groupDiff(a,b,lm)*1.5;
+  var togPen=(tPen(a,tog)+tPen(b,tog))*0.3;
+  return countDiff+sumDiff+avgDiff+grpDiff+togPen;
+}
+function shuf(arr){
+  for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+  return arr;
+}
 
-  function adminCancelEditAkce(){
-    document.getElementById('akce-nazev').value='';
-    document.getElementById('akce-datum').value='';
-    document.getElementById('akce-popis').value='';
-    document.getElementById('akce-edit-id').value='';
-    document.getElementById('akce-form-label').textContent='Přidat akci';
-    document.getElementById('akce-cancel-btn').style.display='none';
-  }
+function renderLos(tA,tB,lm,saved){
+  var sA=tA.reduce(function(s,n){return s+(lm[n]||0);},0);
+  var sB=tB.reduce(function(s,n){return s+(lm[n]||0);},0);
+  var total=sA+sB, bal=total?Math.round(Math.min(sA,sB)/total*100):50;
+  var diff=Math.abs(sA-sB).toFixed(1);
+  var bc=bal>=46?'good':bal>=40?'ok':'bad';
+  var bl=bal>=46?'✅ Výborně vyváženo':bal>=40?'⚠️ Přijatelné':'❌ Nevyváženo';
 
-  function adminEditAkce(id,nazev,datum,popis){
-    document.getElementById('akce-edit-id').value=id;
-    document.getElementById('akce-nazev').value=nazev;
-    document.getElementById('akce-datum').value=datum.slice(0,16);
-    document.getElementById('akce-popis').value=popis||'';
-    document.getElementById('akce-form-label').textContent='Upravit akci';
-    document.getElementById('akce-cancel-btn').style.display='inline-block';
-    document.getElementById('akce-nazev').focus();
-    window.scrollTo(0,0);
-  }
-
-  async function adminDeleteAkce(id,nazev){
-    await sb.from('akce').delete().eq('id',id);
-    flash(`Akce "${nazev}" smazána.`,true);
-    loadAdminAkce();
-  }
-
-  async function loadAdminAkce(){
-    const {data}=await sb.from('akce').select('*').order('datum',{ascending:false});
-    const list=document.getElementById('admin-akce-list');
-    if(!data||!data.length){list.innerHTML='<div class="empty">Žádné akce</div>';return;}
-    const now=new Date();
-    list.innerHTML=data.map(a=>{
-      const d=new Date(a.datum);
-      const dateStr=d.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-      const nazevEsc=esc(a.nazev).replace(/'/g,"&#39;");
-      const datumEsc=(a.datum||'').replace(/'/g,"&#39;");
-      const popisEsc=esc(a.popis||'').replace(/'/g,"&#39;");
-      return `<div class="apr">
-        <div style="flex:1">
-          <div class="pn">${esc(a.nazev)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${dateStr}</div>
-        </div>
-        <button class="btn-sm" style="padding:4px 8px;font-size:12px" onclick="adminEditAkce(${a.id},'${nazevEsc}','${datumEsc}','${popisEsc}')">✏️</button>
-        <button class="btn-rm" onclick="adminDeleteAkce(${a.id},'${nazevEsc}')">✕</button>
-      </div>`;
-    }).join('');
-  }
-
-  async function loadAdminPlayers(){
-    const {data}=await sb.from('players').select('name,level').order('name');
-    const list=document.getElementById('admin-players-list');
-    if(!data||!data.length){list.innerHTML='<div class="empty">Žádní hráči</div>';return;}
-    list.innerHTML=data.map(p=>
-      `<div class="apr"><span class="pn">${esc(p.name)}</span>
-       <input type="number" class="sm" value="${p.level||0}" min="0" max="10" step="0.5"
-         onchange="updateLevel('${esc(p.name)}',this.value)" title="Level"/>
-       <button class="btn-rm" onclick="adminRemovePlayer('${esc(p.name)}')" title="Odebrat">✕</button>
-      </div>`
-    ).join('');
-  }
-
-  async function updateLevel(name,val){await sb.from('players').update({level:parseFloat(val)||0}).eq('name',name);}
-
-  async function adminAddPlayer(){
-    const name=document.getElementById('new-player-input').value.trim();
-    const level=parseFloat(document.getElementById('new-player-level').value)||0;
-    if(!name) return;
-    const {error}=await sb.from('players').insert({name,level});
-    if(error){flash('Hráč již existuje nebo chyba.',false);return;}
-    document.getElementById('new-player-input').value='';
-    document.getElementById('new-player-level').value='';
-    flash(`${name} přidán.`,true);
-    await loadAdminPlayers(); await loadPlayers();
-  }
-
-  async function adminRemovePlayer(name){
-    await sb.from('players').delete().eq('name',name);
-    flash(`${name} odebrán.`,true);
-    await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
-  }
-
-  async function adminReset(){
-    await sb.from('rsvp').delete().neq('player_name','___x___');
-    flash('Přihlášení resetována.',true);
-    await loadRsvp();
-  }
-
-  // ── LOS ───────────────────────────────────────────────────────
-  async function spustLos(){
-    const {data:rd}=await sb.from('rsvp').select('player_name').eq('going',true);
-    const names=(rd||[]).map(r=>r.player_name);
-    if(names.length<2){flash('Potřeba alespoň 2 hráče.',false);return;}
-    const {data:pd}=await sb.from('players').select('name,level').in('name',names);
-    const lm={}; (pd||[]).forEach(p=>lm[p.name]=parseFloat(p.level)||0);
-    const {data:hist}=await sb.from('los_history').select('team_a,team_b');
-    const tog={}; (hist||[]).forEach(h=>{cP(h.team_a||[],tog);cP(h.team_b||[],tog);});
-    let best=null,bestScore=Infinity;
-    for(let i=0;i<600;i++){
-      const sh=shuf([...names]),half=Math.ceil(sh.length/2);
-      const a=sh.slice(0,half),b=sh.slice(half);
-      const s=evalS(a,b,lm,tog);
-      if(s<bestScore){bestScore=s;best={a,b};}
+  // Načti seka/pere pro zobrazení
+  sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']).then(function(res){
+    var cfg={}; (res.data||[]).forEach(function(r){cfg[r.key]=r.value;});
+    var sekaHtml='';
+    if(cfg['seka_pere']){
+      sekaHtml='<div class="seka-card">'+
+        '<div class="seka-title">Seka / Pere</div>'+
+        '<div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+
+        (cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']?esc(cfg['nahradnik1']):'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':'')+  (cfg['nahradnik2']?esc(cfg['nahradnik2']):'')+'</div>':'')+
+        '</div>';
     }
-    currentDraft={teamA:best.a,teamB:best.b,lm};
-    renderLos(best.a,best.b,lm,false);
-    document.getElementById('btn-save-los').style.display='block';
-  }
 
-  function cP(team,map){for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++){const k=[team[i],team[j]].sort().join('|');map[k]=(map[k]||0)+1;}}
-  function tPen(team,map){let s=0;for(let i=0;i<team.length;i++)for(let j=i+1;j<team.length;j++)s+=(map[[team[i],team[j]].sort().join('|')]||0);return s;}
-  function evalS(a,b,lm,tog){const sa=a.reduce((s,n)=>s+(lm[n]||0),0),sb2=b.reduce((s,n)=>s+(lm[n]||0),0);return Math.abs(sa-sb2)*.4+Math.abs(sa/a.length-sb2/b.length)*4+(tPen(a,tog)+tPen(b,tog))*.2;}
-  function shuf(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+    document.getElementById('los-result-area').innerHTML=sekaHtml+
+      '<div class="card">'+
+      '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Aktuální los':'🎲 Návrh losu')+'</div>'+
+      '<div class="score-row">'+
+        '<div class="score-box"><div class="sv">'+tA.length+' vs '+tB.length+'</div><div class="sl">hráčů</div></div>'+
+        '<div class="score-box"><div class="sv">'+sA.toFixed(1)+' / '+sB.toFixed(1)+'</div><div class="sl">součet levelů</div></div>'+
+        '<div class="score-box"><div class="sv">'+diff+'</div><div class="sl">rozdíl</div></div>'+
+      '</div>'+
+      '<div class="bal-bar">'+
+        '<div class="bal-labels"><span>'+bl+'</span><span>'+bal+'% / '+(100-bal)+'%</span></div>'+
+        '<div class="bal-track"><div class="bal-fill '+bc+'" style="width:'+bal+'%"></div></div>'+
+      '</div>'+
+      '<div class="teams-grid">'+
+        '<div class="team-card team-a"><div class="team-title">⚽ Tým A — Navleky</div><div class="team-sum">'+sA.toFixed(1)+'</div><div class="team-avg">průměr '+(tA.length?(sA/tA.length).toFixed(1):'0')+'</div>'+
+        tA.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
+        '<div class="team-card team-b"><div class="team-title">⚽ Tým B</div><div class="team-sum">'+sB.toFixed(1)+'</div><div class="team-avg">průměr '+(tB.length?(sB/tB.length).toFixed(1):'0')+'</div>'+
+        tB.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
+      '</div></div>';
+  });
+}
 
-  function renderLos(tA,tB,lm,saved){
-    const sA=tA.reduce((s,n)=>s+(lm[n]||0),0),sB=tB.reduce((s,n)=>s+(lm[n]||0),0);
-    const total=sA+sB,bal=total?Math.round(Math.min(sA,sB)/total*100):50;
-    const diff=Math.abs(sA-sB).toFixed(1);
-    const bc=bal>=46?'good':bal>=40?'ok':'bad';
-    const bl=bal>=46?'✅ Výborně vyváženo':bal>=40?'⚠️ Přijatelné':'❌ Nevyváženo';
-    document.getElementById('los-result-area').innerHTML=`
-      <div class="card">
-        <div class="section-label" style="margin-bottom:10px">${saved?'✅ Aktuální los':'🎲 Návrh losu'}</div>
-        <div class="score-row">
-          <div class="score-box"><div class="sv">${tA.length} vs ${tB.length}</div><div class="sl">hráčů</div></div>
-          <div class="score-box"><div class="sv">${sA.toFixed(1)} / ${sB.toFixed(1)}</div><div class="sl">součet levelů</div></div>
-          <div class="score-box"><div class="sv">${diff}</div><div class="sl">rozdíl</div></div>
-        </div>
-        <div class="bal-bar">
-          <div class="bal-labels"><span>${bl}</span><span>${bal}% / ${100-bal}%</span></div>
-          <div class="bal-track"><div class="bal-fill ${bc}" style="width:${bal}%"></div></div>
-        </div>
-        <div class="teams-grid">
-          <div class="team-card team-a"><div class="team-title">Tým A</div><div class="team-sum">${sA.toFixed(1)}</div><div class="team-avg">průměr ${tA.length?(sA/tA.length).toFixed(1):'0'}</div>${tA.map(n=>`<div class="team-player"><span>${esc(n)}</span><span class="lvl">${lm[n]||0}</span></div>`).join('')}</div>
-          <div class="team-card team-b"><div class="team-title">Tým B</div><div class="team-sum">${sB.toFixed(1)}</div><div class="team-avg">průměr ${tB.length?(sB/tB.length).toFixed(1):'0'}</div>${tB.map(n=>`<div class="team-player"><span>${esc(n)}</span><span class="lvl">${lm[n]||0}</span></div>`).join('')}</div>
-        </div>
-      </div>`;
-  }
+async function saveLos(){
+  if(!currentDraft) return;
+  await sb.from('los_history').insert({team_a:currentDraft.teamA,team_b:currentDraft.teamB,match_date:new Date().toISOString()});
+  flash('Los uložen!',true);
+  currentDraft=null;
+  document.getElementById('btn-save-los').style.display='none';
+  await loadLosResult();
+  await loadLosHistory();
+  if(adminUnlocked) loadPostihyForm();
+}
+async function loadLosResult(){
+  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
+  var area=document.getElementById('los-result-area');
+  if(!res.data||!res.data.length){area.innerHTML='<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';return;}
+  var last=res.data[0];
+  var all=[...(last.team_a||[]),...(last.team_b||[])];
+  var pRes=await sb.from('players').select('name,level').in('name',all);
+  var lm={}; (pRes.data||[]).forEach(function(p){lm[p.name]=parseFloat(p.level)||0;});
+  renderLos(last.team_a||[],last.team_b||[],lm,true);
+}
+async function loadLosHistory(){
+  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(10);
+  var el=document.getElementById('los-history');
+  if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádná historie</div>';return;}
+  el.innerHTML=res.data.map(function(h){
+    var d=new Date(h.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
+    return '<div class="hist-row"><div class="hist-date">'+d+'</div>'+
+      '<div><strong>A:</strong> '+esc((h.team_a||[]).join(', '))+'</div>'+
+      '<div><strong>B:</strong> '+esc((h.team_b||[]).join(', '))+'</div></div>';
+  }).join('');
+}
 
-  async function saveLos(){
-    if(!currentDraft) return;
-    await sb.from('los_history').insert({team_a:currentDraft.teamA,team_b:currentDraft.teamB,match_date:new Date().toISOString()});
-    flash('Los uložen!',true);
-    currentDraft=null;
-    document.getElementById('btn-save-los').style.display='none';
-    await loadLosResult(); await loadLosHistory();
-  }
+// ── HELPERS ───────────────────────────────────────────────────
+function flash(msg,ok){
+  var el=document.getElementById('flash');
+  el.textContent=msg; el.className='flash show '+(ok?'ok':'err');
+  setTimeout(function(){el.classList.remove('show');},4000);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  async function loadLosResult(){
-    const {data}=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
-    const area=document.getElementById('los-result-area');
-    if(!data||!data.length){area.innerHTML='<div class="los-waiting"><div class="icon">🎲</div><p>Los ještě nebyl spuštěn.</p></div>';return;}
-    const last=data[0],all=[...(last.team_a||[]),...(last.team_b||[])];
-    const {data:pd}=await sb.from('players').select('name,level').in('name',all);
-    const lm={}; (pd||[]).forEach(p=>lm[p.name]=parseFloat(p.level)||0);
-    renderLos(last.team_a||[],last.team_b||[],lm,true);
-  }
-
-  async function loadLosHistory(){
-    const {data}=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(10);
-    const el=document.getElementById('los-history');
-    if(!data||!data.length){el.innerHTML='<div class="empty">Žádná historie</div>';return;}
-    el.innerHTML=data.map(h=>{
-      const d=new Date(h.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
-      return `<div class="hist-row"><div class="hist-date">${d}</div><div><strong>A:</strong> ${esc((h.team_a||[]).join(', '))}</div><div><strong>B:</strong> ${esc((h.team_b||[]).join(', '))}</div></div>`;
-    }).join('');
-  }
-
-  // ── HELPERS ───────────────────────────────────────────────────
-  function flash(msg,ok){
-    const el=document.getElementById('flash');
-    el.textContent=msg;el.className='flash show '+(ok?'ok':'err');
-    setTimeout(()=>el.classList.remove('show'),4000);
-  }
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-
-  // ── INIT ──────────────────────────────────────────────────────
-  loadSettings(); loadPlayers(); loadRsvp(); loadLosResult();
+// ── INIT ──────────────────────────────────────────────────────
+loadSettings(); loadPlayers(); loadRsvp(); loadLosResult();
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
 </body>
