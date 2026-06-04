@@ -353,11 +353,18 @@
       </div>
 
       <div class="card">
-        <div class="section-label">Přidat akci</div>
+        <div class="section-label" id="akce-form-label">Přidat akci</div>
+        <input type="hidden" id="akce-edit-id" value=""/>
         <input type="text" id="akce-nazev" placeholder="Název akce (brigáda, zakončení...)" style="margin-bottom:8px"/>
         <input type="datetime-local" id="akce-datum" style="margin-bottom:8px"/>
         <textarea id="akce-popis" placeholder="Popis akce…" style="margin-bottom:8px"></textarea>
-        <button class="btn-primary" onclick="adminAddAkce()">+ Přidat akci</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-primary" style="flex:1" onclick="adminSaveAkce()">💾 Uložit akci</button>
+          <button class="btn-sm" id="akce-cancel-btn" onclick="adminCancelEditAkce()" style="display:none">Zrušit</button>
+        </div>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:8px">Spravovat akce</div>
+        <div id="admin-akce-list"><div class="loading">Načítám…</div></div>
       </div>
 
       <div class="card">
@@ -421,12 +428,12 @@
   // ============================================================
   const SUPABASE_URL = 'https://yfmioexaaviktarlblgi.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlmbWlvZXhhYXZpa3RhcmxibGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODkzMDMsImV4cCI6MjA5NDk2NTMwM30.KXIsB3wvUq79D-jbn6XPbhoUraQAz9-HcUuj7VMx0kc';
-  const ADMIN_PIN    = '1212';
+  const ADMIN_PIN    = '1234';
   // ============================================================
 
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  let adminUnlocked = false;
-  let currentDraft  = null;
+  var sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  var adminUnlocked = false;
+  var currentDraft  = null;
 
   // ── NAV ──────────────────────────────────────────────────────
   function showPage(id, btn) {
@@ -560,6 +567,8 @@
   }
 
   // ── AKCE ──────────────────────────────────────────────────────
+  var playersList = [];
+
   async function loadAkce(){
     const {data}=await sb.from('akce').select('*').order('datum',{ascending:true});
     const list=document.getElementById('akce-list');
@@ -567,47 +576,62 @@
       list.innerHTML='<div class="akce-empty"><i class="ti ti-speakerphone" style="font-size:40px;color:var(--text-muted);display:block;margin-bottom:12px" aria-hidden="true"></i><p>Zatím žádné akce.<br>Admin přidá první akci.</p></div>';
       return;
     }
+    // Načti hráče pro selecty
+    const {data:pd}=await sb.from('players').select('name').order('name');
+    playersList=(pd||[]).map(p=>p.name);
+
     const now=new Date();
+    const allIds=data.map(a=>a.id);
+    const {data:allRsvp}=await sb.from('akce_rsvp').select('akce_id,player_name,going').in('akce_id',allIds);
+    const rsvpMap={};
+    (allRsvp||[]).forEach(r=>{if(!rsvpMap[r.akce_id])rsvpMap[r.akce_id]=[];rsvpMap[r.akce_id].push(r);});
+
     list.innerHTML=data.map(a=>{
       const d=new Date(a.datum);
       const past=d<now;
       const dateStr=d.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
-      const {data:rsvpData}=[];
-      return `<div class="akce-card">
+      const rsvps=rsvpMap[a.id]||[];
+      const goList=rsvps.filter(r=>r.going);
+      const nogoList=rsvps.filter(r=>!r.going);
+      const rows=goList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-go">Jdu</span></div>`).join('')+
+        nogoList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-nogo">Nejdu</span></div>`).join('');
+      const playerOpts=playersList.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+      return `<div class="akce-card" id="akce-${a.id}">
         <div class="akce-header">
           <div class="akce-title">${esc(a.nazev)}</div>
           <span class="akce-tag ${past?'akce-tag-past':'akce-tag-future'}">${past?'Proběhlo':'Nadcházející'}</span>
         </div>
         <div class="akce-date">📅 ${dateStr}</div>
         ${a.popis?`<div class="akce-desc">${esc(a.popis)}</div>`:''}
-        <div class="akce-footer">
-          <span class="akce-count" id="akce-count-${a.id}">Načítám účastníky…</span>
-          ${!past?`<div class="akce-btns">
-            <button class="btn-akce-go" onclick="respondAkce(${a.id},true)">✓ Zúčastním se</button>
-            <button class="btn-akce-nogo" onclick="respondAkce(${a.id},false)">✕ Nezúčastním se</button>
-          </div>`:''}
-        </div>
+        ${!past?`<div style="margin-bottom:12px">
+          <select id="akce-sel-${a.id}" style="margin-bottom:8px"><option value="">— vyber své jméno —</option>${playerOpts}</select>
+          <div style="display:flex;gap:8px">
+            <button class="btn-akce-go" style="flex:1" onclick="respondAkce(${a.id},true)">✓ Zúčastním se</button>
+            <button class="btn-akce-nogo" style="flex:1;padding:7px" onclick="respondAkce(${a.id},false)">✕ Nezúčastním se</button>
+          </div>
+        </div>`:''}
+        <div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px" id="akce-lbl-${a.id}">Účastníci (${goList.length} jdou · ${nogoList.length} nejdou)</div>
+        <div id="akce-participants-${a.id}">${rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>'}</div>
       </div>`;
     }).join('');
-    // Načti počty účastníků
-    data.forEach(a=>loadAkceCount(a.id));
-  }
-
-  async function loadAkceCount(akceId){
-    const {data}=await sb.from('akce_rsvp').select('player_name,going').eq('akce_id',akceId);
-    const el=document.getElementById(`akce-count-${akceId}`);
-    if(!el) return;
-    const go=(data||[]).filter(r=>r.going).length;
-    const nogo=(data||[]).filter(r=>!r.going).length;
-    el.textContent=`✅ ${go} půjde · ❌ ${nogo} nepůjde`;
   }
 
   async function respondAkce(akceId, going){
-    const name=document.getElementById('player-select').value||prompt('Zadej své jméno:');
-    if(!name) return;
-    await sb.from('akce_rsvp').upsert({akce_id:akceId,player_name:name,going},{onConflict:'akce_id,player_name'});
-    flash(going?'Skvěle, těšíme se!':'Škoda, příště snad!',going);
-    loadAkceCount(akceId);
+    const sel=document.getElementById(`akce-sel-${akceId}`);
+    const name=sel?sel.value:'';
+    if(!name){flash('Nejdřív vyber své jméno.',false);return;}
+    await sb.from('akce_rsvp').upsert({akce_id:akceId,player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'akce_id,player_name'});
+    flash(going?`Super, ${name} — těšíme se!`:`Škoda, ${name} — příště snad!`,going);
+    // Obnovit účastníky
+    const {data}=await sb.from('akce_rsvp').select('player_name,going').eq('akce_id',akceId);
+    const goList=(data||[]).filter(r=>r.going);
+    const nogoList=(data||[]).filter(r=>!r.going);
+    const rows=goList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-go">Jdu</span></div>`).join('')+
+      nogoList.map(r=>`<div class="player-row"><span style="font-weight:500;font-size:13px">${esc(r.player_name)}</span><span class="badge badge-nogo">Nejdu</span></div>`).join('');
+    const el=document.getElementById(`akce-participants-${akceId}`);
+    const lbl=document.getElementById(`akce-lbl-${akceId}`);
+    if(el) el.innerHTML=rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>';
+    if(lbl) lbl.textContent=`Účastníci (${goList.length} jdou · ${nogoList.length} nejdou)`;
   }
 
   // ── ADMIN ─────────────────────────────────────────────────────
@@ -633,7 +657,7 @@
   }
 
   async function loadAdminData(){
-    loadAdminPlayers(); loadMatchDatetime();
+    loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce();
   }
 
   async function loadMatchDatetime(){
@@ -667,17 +691,69 @@
     updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
   }
 
-  async function adminAddAkce(){
+  async function adminSaveAkce(){
     const nazev=document.getElementById('akce-nazev').value.trim();
     const datum=document.getElementById('akce-datum').value;
     const popis=document.getElementById('akce-popis').value.trim();
+    const editId=document.getElementById('akce-edit-id').value;
     if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
-    const {error}=await sb.from('akce').insert({nazev,datum,popis});
-    if(error){flash('Chyba: '+error.message,false);return;}
+    if(editId){
+      await sb.from('akce').update({nazev,datum,popis}).eq('id',editId);
+      flash('Akce upravena!',true);
+    } else {
+      await sb.from('akce').insert({nazev,datum,popis});
+      flash('Akce přidána!',true);
+    }
+    adminCancelEditAkce();
+    loadAdminAkce();
+  }
+
+  function adminCancelEditAkce(){
     document.getElementById('akce-nazev').value='';
     document.getElementById('akce-datum').value='';
     document.getElementById('akce-popis').value='';
-    flash('Akce přidána!',true);
+    document.getElementById('akce-edit-id').value='';
+    document.getElementById('akce-form-label').textContent='Přidat akci';
+    document.getElementById('akce-cancel-btn').style.display='none';
+  }
+
+  function adminEditAkce(id,nazev,datum,popis){
+    document.getElementById('akce-edit-id').value=id;
+    document.getElementById('akce-nazev').value=nazev;
+    document.getElementById('akce-datum').value=datum.slice(0,16);
+    document.getElementById('akce-popis').value=popis||'';
+    document.getElementById('akce-form-label').textContent='Upravit akci';
+    document.getElementById('akce-cancel-btn').style.display='inline-block';
+    document.getElementById('akce-nazev').focus();
+    window.scrollTo(0,0);
+  }
+
+  async function adminDeleteAkce(id,nazev){
+    await sb.from('akce').delete().eq('id',id);
+    flash(`Akce "${nazev}" smazána.`,true);
+    loadAdminAkce();
+  }
+
+  async function loadAdminAkce(){
+    const {data}=await sb.from('akce').select('*').order('datum',{ascending:false});
+    const list=document.getElementById('admin-akce-list');
+    if(!data||!data.length){list.innerHTML='<div class="empty">Žádné akce</div>';return;}
+    const now=new Date();
+    list.innerHTML=data.map(a=>{
+      const d=new Date(a.datum);
+      const dateStr=d.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+      const nazevEsc=esc(a.nazev).replace(/'/g,"&#39;");
+      const datumEsc=(a.datum||'').replace(/'/g,"&#39;");
+      const popisEsc=esc(a.popis||'').replace(/'/g,"&#39;");
+      return `<div class="apr">
+        <div style="flex:1">
+          <div class="pn">${esc(a.nazev)}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${dateStr}</div>
+        </div>
+        <button class="btn-sm" style="padding:4px 8px;font-size:12px" onclick="adminEditAkce(${a.id},'${nazevEsc}','${datumEsc}','${popisEsc}')">✏️</button>
+        <button class="btn-rm" onclick="adminDeleteAkce(${a.id},'${nazevEsc}')">✕</button>
+      </div>`;
+    }).join('');
   }
 
   async function loadAdminPlayers(){
