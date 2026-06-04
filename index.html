@@ -214,18 +214,6 @@
   <!-- LOS -->
   <div id="pg-los" class="page">
     <div id="los-result-area"><div class="loading">Načítám…</div></div>
-    <div id="los-admin-panel" style="display:none">
-      <div class="card">
-        <div class="section-label" style="margin-bottom:10px">Losování</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
-        <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
-        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
-      </div>
-      <div class="card">
-        <div class="section-label" style="margin-bottom:8px">Historie losování</div>
-        <div id="los-history"><div class="loading">Načítám…</div></div>
-      </div>
-    </div>
   </div>
 
   <!-- POŘADÍ -->
@@ -315,6 +303,18 @@
         </select>
         <button class="btn-sm" style="width:100%;margin-bottom:6px" onclick="saveMatchDatetime()">Uložit zápas</button>
         <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
+      </div>
+
+      <!-- Losování -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:10px">Losování</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
+        <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
+        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
+        <div id="los-draft-area" style="margin-top:12px"></div>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:8px">Historie losování</div>
+        <div id="los-history"><div class="loading">Načítám…</div></div>
       </div>
 
       <!-- Výsledek zápasu -->
@@ -609,7 +609,6 @@ function unlockAdmin(){
     adminUnlocked=true;
     document.getElementById('admin-pin-screen').style.display='none';
     document.getElementById('admin-content').style.display='block';
-    document.getElementById('los-admin-panel').style.display='block';
     loadAdminData();
   } else {
     document.getElementById('pin-error').classList.add('show');
@@ -620,7 +619,6 @@ function lockAdmin(){
   adminUnlocked=false;
   document.getElementById('admin-pin-screen').style.display='block';
   document.getElementById('admin-content').style.display='none';
-  document.getElementById('los-admin-panel').style.display='none';
   document.getElementById('admin-pin').value='';
   document.getElementById('pin-error').classList.remove('show');
   showPage('pg-prihlaseni');
@@ -867,7 +865,7 @@ async function spustLos(){
   }
 
   currentDraft={teamA:best.a,teamB:best.b,lm};
-  renderLos(best.a,best.b,lm,false);
+  renderLos(best.a,best.b,lm,false,true);
   document.getElementById('btn-save-los').style.display='block';
 }
 
@@ -911,7 +909,7 @@ function shuf(arr){
   return arr;
 }
 
-function renderLos(tA,tB,lm,saved){
+function renderLos(tA,tB,lm,saved,adminView){
   var sA=tA.reduce(function(s,n){return s+(lm[n]||0);},0);
   var sB=tB.reduce(function(s,n){return s+(lm[n]||0);},0);
   var total=sA+sB, bal=total?Math.round(Math.min(sA,sB)/total*100):50;
@@ -919,7 +917,33 @@ function renderLos(tA,tB,lm,saved){
   var bc=bal>=46?'good':bal>=40?'ok':'bad';
   var bl=bal>=46?'✅ Výborně vyváženo':bal>=40?'⚠️ Přijatelné':'❌ Nevyváženo';
 
-  // Načti seka/pere pro zobrazení
+  // Veřejný pohled — bez levelů
+  var publicTeamsHtml=
+    '<div class="teams-grid">'+
+      '<div class="team-card team-a"><div class="team-title">⚽ Tým 1 — Navleky</div>'+
+      '<div style="margin-top:.5rem">'+tA.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span></div>';}).join('')+'</div></div>'+
+      '<div class="team-card team-b"><div class="team-title">⚽ Tým 2</div>'+
+      '<div style="margin-top:.5rem">'+tB.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span></div>';}).join('')+'</div></div>'+
+    '</div>';
+
+  // Admin pohled — s levely a vyvážeností
+  var adminTeamsHtml=
+    '<div class="score-row">'+
+      '<div class="score-box"><div class="sv">'+tA.length+' vs '+tB.length+'</div><div class="sl">hráčů</div></div>'+
+      '<div class="score-box"><div class="sv">'+sA.toFixed(1)+' / '+sB.toFixed(1)+'</div><div class="sl">součet levelů</div></div>'+
+      '<div class="score-box"><div class="sv">'+diff+'</div><div class="sl">rozdíl</div></div>'+
+    '</div>'+
+    '<div class="bal-bar">'+
+      '<div class="bal-labels"><span>'+bl+'</span><span>'+bal+'% / '+(100-bal)+'%</span></div>'+
+      '<div class="bal-track"><div class="bal-fill '+bc+'" style="width:'+bal+'%"></div></div>'+
+    '</div>'+
+    '<div class="teams-grid">'+
+      '<div class="team-card team-a"><div class="team-title">⚽ Tým 1 — Navleky</div><div class="team-sum">'+sA.toFixed(1)+'</div><div class="team-avg">průměr '+(tA.length?(sA/tA.length).toFixed(1):'0')+'</div>'+
+      tA.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
+      '<div class="team-card team-b"><div class="team-title">⚽ Tým 2</div><div class="team-sum">'+sB.toFixed(1)+'</div><div class="team-avg">průměr '+(tB.length?(sB/tB.length).toFixed(1):'0')+'</div>'+
+      tB.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
+    '</div>';
+
   sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']).then(function(res){
     var cfg={}; (res.data||[]).forEach(function(r){cfg[r.key]=r.value;});
     var sekaHtml='';
@@ -931,24 +955,22 @@ function renderLos(tA,tB,lm,saved){
         '</div>';
     }
 
-    document.getElementById('los-result-area').innerHTML=sekaHtml+
-      '<div class="card">'+
-      '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Aktuální los':'🎲 Návrh losu')+'</div>'+
-      '<div class="score-row">'+
-        '<div class="score-box"><div class="sv">'+tA.length+' vs '+tB.length+'</div><div class="sl">hráčů</div></div>'+
-        '<div class="score-box"><div class="sv">'+sA.toFixed(1)+' / '+sB.toFixed(1)+'</div><div class="sl">součet levelů</div></div>'+
-        '<div class="score-box"><div class="sv">'+diff+'</div><div class="sl">rozdíl</div></div>'+
-      '</div>'+
-      '<div class="bal-bar">'+
-        '<div class="bal-labels"><span>'+bl+'</span><span>'+bal+'% / '+(100-bal)+'%</span></div>'+
-        '<div class="bal-track"><div class="bal-fill '+bc+'" style="width:'+bal+'%"></div></div>'+
-      '</div>'+
-      '<div class="teams-grid">'+
-        '<div class="team-card team-a"><div class="team-title">⚽ Tým A — Navleky</div><div class="team-sum">'+sA.toFixed(1)+'</div><div class="team-avg">průměr '+(tA.length?(sA/tA.length).toFixed(1):'0')+'</div>'+
-        tA.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
-        '<div class="team-card team-b"><div class="team-title">⚽ Tým B</div><div class="team-sum">'+sB.toFixed(1)+'</div><div class="team-avg">průměr '+(tB.length?(sB/tB.length).toFixed(1):'0')+'</div>'+
-        tB.map(function(n){return '<div class="team-player"><span>'+esc(n)+'</span><span class="lvl">'+(lm[n]||0)+'</span></div>';}).join('')+'</div>'+
-      '</div></div>';
+    // Veřejná záložka Los
+    var publicEl=document.getElementById('los-result-area');
+    if(publicEl){
+      publicEl.innerHTML=sekaHtml+
+        '<div class="card">'+
+        '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Aktuální los':'🎲 Návrh losu')+'</div>'+
+        publicTeamsHtml+'</div>';
+    }
+
+    // Admin náhled (draft)
+    if(adminView){
+      var draftEl=document.getElementById('los-draft-area');
+      if(draftEl) draftEl.innerHTML='<div class="card" style="background:var(--bg)">'+
+        '<div class="section-label" style="margin-bottom:8px">Náhled losu (s levely)</div>'+
+        adminTeamsHtml+'</div>';
+    }
   });
 }
 
@@ -970,7 +992,7 @@ async function loadLosResult(){
   var all=[...(last.team_a||[]),...(last.team_b||[])];
   var pRes=await sb.from('players').select('name,level').in('name',all);
   var lm={}; (pRes.data||[]).forEach(function(p){lm[p.name]=parseFloat(p.level)||0;});
-  renderLos(last.team_a||[],last.team_b||[],lm,true);
+  renderLos(last.team_a||[],last.team_b||[],lm,true,false);
 }
 async function loadLosHistory(){
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(10);
