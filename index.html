@@ -328,18 +328,30 @@
         <div class="section-label">Zadat výsledek zápasu</div>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
           <div style="flex:1;text-align:center">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Tým A (Navleky)</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Team 1 (Navleky)</div>
             <input type="number" id="skore-a" min="0" value="0" style="text-align:center;font-size:22px;font-weight:700;padding:10px;margin-bottom:0"/>
           </div>
           <div style="font-size:24px;color:var(--text-muted);padding-top:20px">:</div>
           <div style="flex:1;text-align:center">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Tým B</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Team 2</div>
             <input type="number" id="skore-b" min="0" value="0" style="text-align:center;font-size:22px;font-weight:700;padding:10px;margin-bottom:0"/>
           </div>
         </div>
         <div class="section-label" style="margin-bottom:6px">Postihy hráčů</div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">a = přišel pozdě/odešel dříve · b = přišel nezapsaný · c = nepřišel a byl zapsán</p>
         <div id="postihy-list"><div class="loading">Načti los pro zobrazení hráčů</div></div>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:6px">Přidat hráče s postihem b (přišel nezapsaný)</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">Hráč přišel ale nebyl přihlášen — přidej ho do týmu a nastav postih b.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+          <select id="extra-player-sel" style="flex:2;margin-bottom:0"><option value="">— vyber hráče —</option></select>
+          <select id="extra-team-sel" style="flex:1;margin-bottom:0">
+            <option value="1">Team 1</option>
+            <option value="2">Team 2</option>
+          </select>
+          <button class="btn-sm" onclick="pridatExtraHrace()">+ Přidat</button>
+        </div>
+        <div id="extra-players-list"></div>
         <div style="margin-top:12px">
           <button class="btn-primary" onclick="ulozitVysledek()">💾 Uložit výsledek zápasu</button>
         </div>
@@ -696,25 +708,66 @@ async function saveSekaPere(){
 }
 
 // ── VÝSLEDEK ZÁPASU ───────────────────────────────────────────
+var extraPlayers = [];
+
 async function loadPostihyForm(){
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   var list=document.getElementById('postihy-list');
   if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Nejprve proveď losování.</div>';return;}
   var last=res.data[0];
   currentLos=last;
+  extraPlayers=[];
+  renderExtraPlayers();
   var allPlayers=[...(last.team_a||[]),...(last.team_b||[])];
   list.innerHTML=allPlayers.map(function(name,i){
-    var team=i<(last.team_a||[]).length?'A':'B';
+    var team=i<(last.team_a||[]).length?'1':'2';
     return '<div class="vysledek-row">'+
       '<span class="vname">'+esc(name)+'</span>'+
-      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Tým '+team+'</span>'+
-      '<select class="postih-sel" id="postih-'+esc(name).replace(/ /g,'_')+'">'+
+      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+team+'</span>'+
+      '<select class="postih-sel" id="postih-'+name.replace(/ /g,'_')+'">'+
         '<option value="">—</option>'+
         '<option value="a">postih a</option>'+
         '<option value="b">postih b</option>'+
         '<option value="c">postih c</option>'+
       '</select></div>';
   }).join('');
+  // Naplň select extra hráčů (hráči co nejsou v losu)
+  var losPlayers=allPlayers;
+  var extraSel=document.getElementById('extra-player-sel');
+  if(extraSel){
+    extraSel.innerHTML='<option value="">— vyber hráče —</option>'+
+      playersList.filter(function(n){return !losPlayers.includes(n);})
+        .map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');
+  }
+}
+
+function pridatExtraHrace(){
+  var sel=document.getElementById('extra-player-sel');
+  var teamSel=document.getElementById('extra-team-sel');
+  var name=sel?sel.value:'';
+  var team=teamSel?teamSel.value:'1';
+  if(!name){flash('Vyber hráče.',false);return;}
+  if(extraPlayers.find(function(p){return p.name===name;})){flash('Hráč již přidán.',false);return;}
+  extraPlayers.push({name,team,postih:'b'});
+  sel.value='';
+  renderExtraPlayers();
+}
+
+function renderExtraPlayers(){
+  var el=document.getElementById('extra-players-list');
+  if(!el) return;
+  if(!extraPlayers.length){el.innerHTML='';return;}
+  el.innerHTML=extraPlayers.map(function(p,i){
+    return '<div class="vysledek-row" style="background:var(--orange-light,#fff3cd)">'+
+      '<span class="vname">'+esc(p.name)+'</span>'+
+      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+p.team+' · postih b</span>'+
+      '<button class="btn-rm" onclick="removeExtraHrac('+i+')">✕</button></div>';
+  }).join('');
+}
+
+function removeExtraHrac(i){
+  extraPlayers.splice(i,1);
+  renderExtraPlayers();
 }
 
 async function ulozitVysledek(){
@@ -761,6 +814,13 @@ async function ulozitVysledek(){
     var body=calcBody(postih,bodyVyhraB,vysledekB);
     var pm=calcPM(postih,pmB,pmA);
     stats.push({match_id:matchId,player_name:name,team:2,body,plus_minus:pm,postih:postih||null});
+  });
+  // Extra hráči s postihem b
+  extraPlayers.forEach(function(p){
+    var t=parseInt(p.team)||1;
+    var bodyExtra=0.25;
+    var pmExtra=t===1?pmB:pmA; // poražený tým pm
+    stats.push({match_id:matchId,player_name:p.name,team:t,body:bodyExtra,plus_minus:pmExtra,postih:'b'});
   });
 
   await sb.from('match_stats').insert(stats);
