@@ -654,6 +654,46 @@ function unlockAdmin(){
     document.getElementById('admin-pin').value='';
   }
 }
+async function pridatEvidenci(){
+  var name=document.getElementById('evidence-hrac-sel').value;
+  var typ=document.getElementById('evidence-typ-sel').value;
+  if(!name){flash('Vyber hráče.',false);return;}
+  var res=await sb.from('seka_evidence').insert({player_name:name,typ:typ,datum:new Date().toISOString()});
+  if(res.error){flash('Chyba: '+res.error.message,false);return;}
+  flash((typ==='seka'?'Sekání':'Praní')+' zaznamenáno pro '+name+'.',true);
+  document.getElementById('evidence-hrac-sel').value='';
+  loadEvidenceCounts();
+}
+
+async function loadEvidenceCounts(){
+  var el=document.getElementById('evidence-list');
+  if(!el) return;
+  var res=await sb.from('seka_evidence').select('player_name,typ');
+  if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádné záznamy</div>';return;}
+  var counts={};
+  res.data.forEach(function(r){
+    if(!counts[r.player_name]) counts[r.player_name]={seka:0,prani:0};
+    counts[r.player_name][r.typ]=(counts[r.player_name][r.typ]||0)+1;
+  });
+  var arr=Object.entries(counts).map(function(e){return {name:e[0],seka:e[1].seka||0,prani:e[1].prani||0};});
+  arr.sort(function(a,b){return (a.seka+a.prani)-(b.seka+b.prani);});
+  el.innerHTML='<table style="width:100%;font-size:13px;border-collapse:collapse">'+
+    '<thead><tr style="background:var(--green);color:#fff">'+
+    '<th style="padding:7px 10px;text-align:left">Hráč</th>'+
+    '<th style="padding:7px 10px;text-align:center">Sekání</th>'+
+    '<th style="padding:7px 10px;text-align:center">Praní</th>'+
+    '<th style="padding:7px 10px;text-align:center">Celkem</th>'+
+    '</tr></thead><tbody>'+
+    arr.map(function(p){
+      return '<tr style="border-bottom:.5px solid var(--border)">'+
+        '<td style="padding:7px 10px;font-weight:500">'+esc(p.name)+'</td>'+
+        '<td style="padding:7px 10px;text-align:center">'+p.seka+'</td>'+
+        '<td style="padding:7px 10px;text-align:center">'+p.prani+'</td>'+
+        '<td style="padding:7px 10px;text-align:center;font-weight:600">'+(p.seka+p.prani)+'</td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+}
+
 function lockAdmin(){
   adminUnlocked=false;
   document.getElementById('admin-pin-screen').style.display='block';
@@ -712,6 +752,7 @@ async function loadSekaPere(){
   if(cfg['seka_pere']) document.getElementById('seka-pere-sel').value=cfg['seka_pere'];
   if(cfg['nahradnik1']) document.getElementById('nahradnik1-sel').value=cfg['nahradnik1'];
   if(cfg['nahradnik2']) document.getElementById('nahradnik2-sel').value=cfg['nahradnik2'];
+  loadEvidenceCounts();
 }
 async function saveSekaPere(){
   var s=document.getElementById('seka-pere-sel').value;
