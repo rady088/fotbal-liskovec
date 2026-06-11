@@ -340,19 +340,6 @@
           <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
         </div>
         <button class="btn-sm" style="width:100%;margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit</button>
-        <div class="admin-divider"></div>
-        <div class="section-label" style="margin-bottom:8px">Evidence sekání / praní</div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Po zápase zaznamenej kdo sekal/pral.</p>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <select id="evidence-hrac-sel" style="flex:1;margin-bottom:0"><option value="">— vyber hráče —</option></select>
-          <select id="evidence-typ-sel" style="flex:1;margin-bottom:0">
-            <option value="seka">Sekání</option>
-            <option value="prani">Praní</option>
-          </select>
-          <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
-        </div>
-        <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
-        <div id="evidence-list"><div class="loading">Načítám…</div></div>
       </div>
 
       
@@ -388,7 +375,7 @@
           <button class="btn-sm" onclick="editVysledek()" style="font-size:12px">✏️ Upravit</button>
         </div>
         <div class="section-label" style="margin-bottom:4px">Datum zápasu</div>
-        <select id="vysledek-datum" style="margin-bottom:12px"><option value="">— vyber zápas —</option></select>
+        <select id="vysledek-datum" style="margin-bottom:12px" onchange="onZapasChange()"><option value="">— vyber zápas —</option></select>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
           <div style="flex:1;text-align:center">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Team 1 (Navleky)</div>
@@ -755,24 +742,29 @@ async function loadEvidenceCounts(){
 }
 
 async function loadVysledekStatus(){
-  var res=await sb.from('settings').select('value').eq('key','last_match_id').single();
   var statusEl=document.getElementById('vysledek-status');
   if(!statusEl) return;
-  if(!res.data||!res.data.value){statusEl.style.display='none';return;}
-  var matchId=res.data.value;
-  var mRes=await sb.from('matches').select('match_date,score_t1,score_t2').eq('id',matchId).single();
-  if(!mRes.data){statusEl.style.display='none';return;}
+  // Zkontroluj jestli pro aktuálně vybraný los existuje výsledek
+  if(!currentLos){statusEl.style.display='none';return;}
+  var losId=currentLos.id;
+  var mRes=await sb.from('matches').select('id,match_date,score_t1,score_t2').eq('los_id',losId).single();
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(!mRes.data){
+    statusEl.style.display='none';
+    if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
+    return;
+  }
   var d=new Date(mRes.data.match_date).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
   document.getElementById('vysledek-status-text').textContent='✅ Výsledek uložen: '+d+' · '+mRes.data.score_t1+':'+mRes.data.score_t2;
   statusEl.style.display='flex';
-  var btn=document.getElementById('btn-ulozit-vysledek');
   if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
 }
 
 async function editVysledek(){
-  var res=await sb.from('settings').select('value').eq('key','last_match_id').single();
-  if(!res.data||!res.data.value){flash('Žádný uložený výsledek.',false);return;}
-  var matchId=parseInt(res.data.value);
+  if(!currentLos){flash('Nejprve vyber zápas.',false);return;}
+  var mCheck=await sb.from('matches').select('id').eq('los_id',currentLos.id).single();
+  if(!mCheck.data){flash('Žádný uložený výsledek pro tento zápas.',false);return;}
+  var matchId=parseInt(mCheck.data.id);
 
   // Načti existující výsledek
   var mRes=await sb.from('matches').select('*').eq('id',matchId).single();
@@ -936,6 +928,43 @@ async function saveSekaPere(){
 
 // ── VÝSLEDEK ZÁPASU ───────────────────────────────────────────
 var extraPlayers = [];
+
+async function onZapasChange(){
+  var sel=document.getElementById('vysledek-datum');
+  if(!sel||!sel.value) return;
+  // Najdi los který odpovídá vybranému datu
+  var losRes=await sb.from('los_history').select('*').eq('match_date',sel.value).single();
+  if(!losRes.data){
+    // Try by created_at
+    var losRes2=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(20);
+    if(losRes2.data){
+      var found=losRes2.data.find(function(h){return (h.match_date||h.created_at)===sel.value;});
+      if(found) currentLos=found;
+    }
+  } else {
+    currentLos=losRes.data;
+  }
+  loadVysledekStatus();
+  // Aktualizuj postihy hráčů
+  if(currentLos){
+    extraPlayers=[];
+    renderExtraPlayers();
+    var allPlayers=[...(currentLos.team_a||[]),...(currentLos.team_b||[])];
+    var list=document.getElementById('postihy-list');
+    list.innerHTML=allPlayers.map(function(name,i){
+      var team=i<(currentLos.team_a||[]).length?'1':'2';
+      return '<div class="vysledek-row">'+
+        '<span class="vname">'+esc(name)+'</span>'+
+        '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+team+'</span>'+
+        '<select class="postih-sel" id="postih-'+name.replace(/ /g,'_')+'">'+
+          '<option value="">—</option>'+
+          '<option value="a">postih a</option>'+
+          '<option value="b">postih b</option>'+
+          '<option value="c">postih c</option>'+
+        '</select></div>';
+    }).join('');
+  }
+}
 
 async function loadPostihyForm(){
   // Naplň select zápasů z los_history
