@@ -331,7 +331,7 @@
           <button class="btn-sm" onclick="editVysledek()" style="font-size:12px">✏️ Upravit</button>
         </div>
         <div class="section-label" style="margin-bottom:4px">Datum zápasu</div>
-        <input type="datetime-local" id="vysledek-datum" style="margin-bottom:12px"/>
+        <select id="vysledek-datum" style="margin-bottom:12px"><option value="">— vyber zápas —</option></select>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
           <div style="flex:1;text-align:center">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Team 1 (Navleky)</div>
@@ -359,7 +359,7 @@
         </div>
         <div id="extra-players-list"></div>
         <div style="margin-top:12px">
-          <button class="btn-primary" onclick="ulozitVysledek()">💾 Uložit výsledek zápasu</button>
+          <button class="btn-primary" id="btn-ulozit-vysledek" onclick="ulozitVysledek()">💾 Uložit výsledek zápasu</button>
         </div>
       </div>
 
@@ -711,6 +711,8 @@ async function loadVysledekStatus(){
   var d=new Date(mRes.data.match_date).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
   document.getElementById('vysledek-status-text').textContent='✅ Výsledek uložen: '+d+' · '+mRes.data.score_t1+':'+mRes.data.score_t2;
   statusEl.style.display='flex';
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
 }
 
 async function editVysledek(){
@@ -722,6 +724,8 @@ async function editVysledek(){
   await sb.from('matches').delete().eq('id',matchId);
   await sb.from('settings').upsert({key:'last_match_id',value:''},{onConflict:'key'});
   document.getElementById('vysledek-status').style.display='none';
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
   flash('Výsledek smazán — zadej nový.',true);
 }
 
@@ -804,6 +808,21 @@ async function saveSekaPere(){
 var extraPlayers = [];
 
 async function loadPostihyForm(){
+  // Naplň select zápasů z los_history
+  var losRes=await sb.from('los_history').select('id,match_date,created_at').order('created_at',{ascending:false}).limit(20);
+  var datSel=document.getElementById('vysledek-datum');
+  if(datSel&&losRes.data){
+    datSel.innerHTML='<option value="">— vyber zápas —</option>'+
+      losRes.data.map(function(h){
+        var dt=new Date(h.match_date||h.created_at);
+        var label=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+        return '<option value="'+(h.match_date||h.created_at)+'">'+label+'</option>';
+      }).join('');
+    // Předvyber aktuální datum zápasu
+    var setRes2=await sb.from('settings').select('value').eq('key','match_datetime').single();
+    if(setRes2.data&&setRes2.data.value) datSel.value=setRes2.data.value;
+  }
+
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   var list=document.getElementById('postihy-list');
   if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Nejprve proveď losování.</div>';return;}
@@ -867,7 +886,8 @@ async function ulozitVysledek(){
   if(!currentLos){flash('Nejprve proveď losování.',false);return;}
   var skoreA=parseInt(document.getElementById('skore-a').value)||0;
   var skoreB=parseInt(document.getElementById('skore-b').value)||0;
-  var matchDatum=document.getElementById('vysledek-datum').value||new Date().toISOString().slice(0,16);
+  var matchDatum=document.getElementById('vysledek-datum').value||new Date().toISOString();
+  if(!matchDatum){flash('Vyber datum zápasu.',false);return;}
   var teamA=currentLos.team_a||[], teamB=currentLos.team_b||[];
 
   // Výsledek pro každý tým
@@ -921,6 +941,9 @@ async function ulozitVysledek(){
   flash('Výsledek uložen! Skóre '+skoreA+':'+skoreB,true);
   // Ulož match_id pro možnost úpravy
   await sb.from('settings').upsert({key:'last_match_id',value:String(matchId)},{onConflict:'key'});
+  // Zablokuj tlačítko
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
   loadVysledekStatus();
 }
 
@@ -1151,8 +1174,20 @@ function renderLos(tA,tB,lm,saved,adminView){
 
 async function saveLos(){
   if(!currentDraft) return;
-  await sb.from('los_history').insert({team_a:currentDraft.teamA,team_b:currentDraft.teamB,match_date:new Date().toISOString()});
-  flash('Los uložen!',true);
+  // Načti datum zápasu ze settings
+  var setRes=await sb.from('settings').select('value').eq('key','match_datetime').single();
+  var matchDate=setRes.data&&setRes.data.value?setRes.data.value:new Date().toISOString();
+
+  // Zkontroluj jestli los pro toto datum už existuje
+  var existing=await sb.from('los_history').select('id').eq('match_date',matchDate).single();
+  if(existing.data){
+    // Přepiš existující los
+    await sb.from('los_history').update({team_a:currentDraft.teamA,team_b:currentDraft.teamB}).eq('id',existing.data.id);
+    flash('Los přepsán!',true);
+  } else {
+    await sb.from('los_history').insert({team_a:currentDraft.teamA,team_b:currentDraft.teamB,match_date:matchDate});
+    flash('Los uložen!',true);
+  }
   currentDraft=null;
   document.getElementById('btn-save-los').style.display='none';
   await loadLosResult();
@@ -1174,10 +1209,11 @@ async function loadLosHistory(){
   var el=document.getElementById('los-history');
   if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádná historie</div>';return;}
   el.innerHTML=res.data.map(function(h){
-    var d=new Date(h.created_at).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
-    return '<div class="hist-row"><div class="hist-date">'+d+'</div>'+
-      '<div><strong>A:</strong> '+esc((h.team_a||[]).join(', '))+'</div>'+
-      '<div><strong>B:</strong> '+esc((h.team_b||[]).join(', '))+'</div></div>';
+    var dt=new Date(h.match_date||h.created_at);
+    var d=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    return '<div class="hist-row"><div class="hist-date">⚽ '+d+'</div>'+
+      '<div><strong>Team 1:</strong> '+esc((h.team_a||[]).join(', '))+'</div>'+
+      '<div><strong>Team 2:</strong> '+esc((h.team_b||[]).join(', '))+'</div></div>';
   }).join('');
 }
 
