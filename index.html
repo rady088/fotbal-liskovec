@@ -867,7 +867,7 @@ function lockAdmin(){
 }
 async function loadAdminData(){
   await loadPlayers();
-  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus(); loadVysledkyList();
+  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus(); loadVysledkyList(); loadLosHistory();
 }
 async function loadMatchDatetime(){
   var res=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
