@@ -324,24 +324,6 @@
         <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
       </div>
 
-        <!-- Losování -->
-      <div class="card">
-        <div class="section-label" style="margin-bottom:10px">Losování</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
-        <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
-        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
-        <div id="los-draft-area" style="margin-top:12px"></div>
-        <div class="admin-divider"></div>
-        <div class="section-label" style="margin-bottom:8px">Historie losování</div>
-        <div id="los-history"><div class="loading">Načítám…</div></div>
-      </div>
-
-        <!-- Reset -->
-        <div class="card">
-          <div class="section-label" style="margin-bottom:8px">Reset přihlášení</div>
-          <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Vymaže odpovědi Jdu/Nejdu před novým zápasem.</p>
-          <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
-        </div>
         <!-- Seka/Pere -->
       <div class="card">
         <div class="section-label">Seka / Pere</div>
@@ -374,6 +356,24 @@
 
       </div>
 
+        <!-- Losování -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:10px">Losování</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
+        <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
+        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
+        <div id="los-draft-area" style="margin-top:12px"></div>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:8px">Historie losování</div>
+        <div id="los-history"><div class="loading">Načítám…</div></div>
+      </div>
+
+        <!-- Reset -->
+        <div class="card">
+          <div class="section-label" style="margin-bottom:8px">Reset přihlášení</div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Vymaže odpovědi Jdu/Nejdu před novým zápasem.</p>
+          <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
+        </div>
       <!-- SUB: VÝSLEDKY -->
       <div id="sub-vysledky" class="sub-page">
         <!-- Výsledek zápasu -->
@@ -454,10 +454,6 @@
       </div>
     </div>
   </div>
-</div>
-<div style="height:100px"></div>
-      </div>
-
       <!-- SUB: AKCE -->
       <div id="sub-akce" class="sub-page">
         <!-- Přidat akci -->
@@ -482,6 +478,8 @@
         <button class="btn-sm" style="width:100%;color:var(--text-muted)" onclick="lockAdmin()">Zamknout admin</button>
       </div>
     </div>
+  <div style="height:100px"></div>
+  </div>
 
 <nav class="bottom-nav">
   <button class="bottom-tab active" onclick="showPage('pg-prihlaseni',this)" data-page="pg-prihlaseni">
@@ -1093,8 +1091,8 @@ async function adminSaveAkce(){
   var editId=document.getElementById('akce-edit-id').value;
   if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
   if(editId){
-    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',parseInt(editId));
-    if(upd.error){flash('Chyba: '+upd.error.message,false);return;}
+    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',editId);
+    if(upd.error){flash('Chyba při úpravě: '+upd.error.message,false);return;}
     flash('Akce upravena!',true);
   } else {
     var ins=await sb.from('akce').insert({nazev:nazev,datum:datum,popis:popis});
