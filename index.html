@@ -1395,7 +1395,17 @@ function flash(msg,ok){
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 // ── INIT ──────────────────────────────────────────────────────
-loadSettings(); loadPlayers(); loadRsvp(); loadLosResult();
+window.onerror = function(msg, src, line) {
+  console.error('JS Error:', msg, 'line:', line);
+  // Ensure bottom-nav stays visible on error
+  var nav = document.querySelector('.bottom-nav');
+  if(nav) nav.style.display = 'flex';
+  return false;
+};
+try { loadSettings(); } catch(e) { console.error('loadSettings:', e); }
+try { loadPlayers(); } catch(e) { console.error('loadPlayers:', e); }
+try { loadRsvp(); } catch(e) { console.error('loadRsvp:', e); }
+try { loadLosResult(); } catch(e) { console.error('loadLosResult:', e); }
 </script>
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
 </body>
