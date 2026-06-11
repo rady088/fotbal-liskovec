@@ -893,9 +893,15 @@ async function loadPostihyForm(){
         var label=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
         return '<option value="'+(h.match_date||h.created_at)+'">'+label+'</option>';
       }).join('');
-    // Předvyber aktuální datum zápasu
-    var setRes2=await sb.from('settings').select('value').eq('key','match_datetime').single();
-    if(setRes2.data&&setRes2.data.value) datSel.value=setRes2.data.value;
+    // Předvyber první datum bez výsledku
+    var matchesRes=await sb.from('matches').select('los_id');
+    var usedLosIds=(matchesRes.data||[]).map(function(m){return m.los_id;}).filter(Boolean);
+    var firstUnused=losRes.data.find(function(h){return !usedLosIds.includes(h.id);});
+    if(firstUnused){
+      datSel.value=firstUnused.match_date||firstUnused.created_at;
+    } else if(losRes.data.length){
+      datSel.value=losRes.data[0].match_date||losRes.data[0].created_at;
+    }
   }
 
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
