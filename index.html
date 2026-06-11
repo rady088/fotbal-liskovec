@@ -326,6 +326,12 @@
       <!-- Výsledek zápasu -->
       <div class="card">
         <div class="section-label">Zadat výsledek zápasu</div>
+        <div id="vysledek-status" style="display:none;background:var(--green-light);color:var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
+          <span id="vysledek-status-text"></span>
+          <button class="btn-sm" onclick="editVysledek()" style="font-size:12px">✏️ Upravit</button>
+        </div>
+        <div class="section-label" style="margin-bottom:4px">Datum zápasu</div>
+        <input type="datetime-local" id="vysledek-datum" style="margin-bottom:12px"/>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
           <div style="flex:1;text-align:center">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Team 1 (Navleky)</div>
@@ -694,6 +700,31 @@ async function loadEvidenceCounts(){
     }).join('')+'</tbody></table>';
 }
 
+async function loadVysledekStatus(){
+  var res=await sb.from('settings').select('value').eq('key','last_match_id').single();
+  var statusEl=document.getElementById('vysledek-status');
+  if(!statusEl) return;
+  if(!res.data||!res.data.value){statusEl.style.display='none';return;}
+  var matchId=res.data.value;
+  var mRes=await sb.from('matches').select('match_date,score_t1,score_t2').eq('id',matchId).single();
+  if(!mRes.data){statusEl.style.display='none';return;}
+  var d=new Date(mRes.data.match_date).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
+  document.getElementById('vysledek-status-text').textContent='✅ Výsledek uložen: '+d+' · '+mRes.data.score_t1+':'+mRes.data.score_t2;
+  statusEl.style.display='flex';
+}
+
+async function editVysledek(){
+  var res=await sb.from('settings').select('value').eq('key','last_match_id').single();
+  if(!res.data||!res.data.value){flash('Žádný uložený výsledek.',false);return;}
+  var matchId=parseInt(res.data.value);
+  // Smaž stats a zápas pro přepsání
+  await sb.from('match_stats').delete().eq('match_id',matchId);
+  await sb.from('matches').delete().eq('id',matchId);
+  await sb.from('settings').upsert({key:'last_match_id',value:''},{onConflict:'key'});
+  document.getElementById('vysledek-status').style.display='none';
+  flash('Výsledek smazán — zadej nový.',true);
+}
+
 function lockAdmin(){
   adminUnlocked=false;
   document.getElementById('admin-pin-screen').style.display='block';
@@ -704,12 +735,17 @@ function lockAdmin(){
 }
 async function loadAdminData(){
   await loadPlayers();
-  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm();
+  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus();
 }
 async function loadMatchDatetime(){
   var res=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
   var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
-  if(cfg['match_datetime']){document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);updateResetInfo(cfg['match_datetime']);}
+  if(cfg['match_datetime']){
+    document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);
+    updateResetInfo(cfg['match_datetime']);
+    var vd=document.getElementById('vysledek-datum');
+    if(vd&&!vd.value) vd.value=cfg['match_datetime'].slice(0,16);
+  }
   if(cfg['match_venue']) document.getElementById('match-venue-sel').value=cfg['match_venue'];
 }
 function updateResetInfo(dt){
@@ -831,6 +867,7 @@ async function ulozitVysledek(){
   if(!currentLos){flash('Nejprve proveď losování.',false);return;}
   var skoreA=parseInt(document.getElementById('skore-a').value)||0;
   var skoreB=parseInt(document.getElementById('skore-b').value)||0;
+  var matchDatum=document.getElementById('vysledek-datum').value||new Date().toISOString().slice(0,16);
   var teamA=currentLos.team_a||[], teamB=currentLos.team_b||[];
 
   // Výsledek pro každý tým
@@ -841,7 +878,7 @@ async function ulozitVysledek(){
   var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
 
   // Ulož zápas
-  var matchRes=await sb.from('matches').insert({match_date:new Date().toISOString(),score_t1:skoreA,score_t2:skoreB});
+  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB});
   if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
   var matchId=matchRes.data&&matchRes.data[0]&&matchRes.data[0].id;
 
@@ -882,8 +919,9 @@ async function ulozitVysledek(){
 
   await sb.from('match_stats').insert(stats);
   flash('Výsledek uložen! Skóre '+skoreA+':'+skoreB,true);
-  document.getElementById('skore-a').value=0;
-  document.getElementById('skore-b').value=0;
+  // Ulož match_id pro možnost úpravy
+  await sb.from('settings').upsert({key:'last_match_id',value:String(matchId)},{onConflict:'key'});
+  loadVysledekStatus();
 }
 
 // ── ADMIN AKCE ────────────────────────────────────────────────
