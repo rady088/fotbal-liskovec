@@ -363,6 +363,12 @@
         </div>
       </div>
 
+      <!-- Seznam výsledků -->
+      <div class="card">
+        <div class="section-label" style="margin-bottom:8px">Zapsané výsledky</div>
+        <div id="vysledky-list"><div class="loading">Načítám…</div></div>
+      </div>
+
       <!-- Seka/Pere -->
       <div class="card">
         <div class="section-label">Seka / Pere</div>
@@ -727,6 +733,56 @@ async function editVysledek(){
   var btn=document.getElementById('btn-ulozit-vysledek');
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
   flash('Výsledek smazán — zadej nový.',true);
+  loadVysledkyList();
+}
+
+async function loadVysledkyList(){
+  var el=document.getElementById('vysledky-list');
+  if(!el) return;
+  var res=await sb.from('matches').select('*').order('match_date',{ascending:false}).limit(20);
+  if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádné výsledky</div>';return;}
+  el.innerHTML=res.data.map(function(m){
+    var d=new Date(m.match_date).toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'});
+    var res_txt=m.score_t1>m.score_t2?'Výhra Team 1':m.score_t1<m.score_t2?'Výhra Team 2':'Remíza';
+    return '<div class="apr" style="flex-direction:column;align-items:stretch;gap:4px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-weight:600;font-size:14px">'+m.score_t1+' : '+m.score_t2+'</div>'+
+        '<div style="font-size:12px;color:var(--text-muted)">'+d+' · '+res_txt+'</div></div>'+
+        '<button class="btn-sm" style="font-size:12px;color:var(--red)" onclick="smazatVysledek('+m.id+')">🗑 Smazat</button>'+
+      '</div>'+
+      '<div id="stats-'+m.id+'" style="font-size:12px;color:var(--text-muted);margin-top:4px"><button class="btn-sm" style="font-size:11px;width:100%" onclick="toggleStats('+m.id+')">Zobrazit postihy</button></div>'+
+    '</div>';
+  }).join('');
+}
+
+async function toggleStats(matchId){
+  var el=document.getElementById('stats-'+matchId);
+  if(el.dataset.loaded){el.innerHTML='<button class="btn-sm" style="font-size:11px;width:100%" onclick="toggleStats('+matchId+')">Zobrazit postihy</button>';el.dataset.loaded='';return;}
+  var res=await sb.from('match_stats').select('player_name,team,body,plus_minus,postih').eq('match_id',matchId).order('team');
+  if(!res.data||!res.data.length){el.innerHTML='<em>Žádné záznamy</em>';return;}
+  el.dataset.loaded='1';
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;margin-top:4px">'+
+    '<tr style="font-size:11px;color:var(--text-muted)"><th style="text-align:left;padding:3px">Hráč</th><th>Tým</th><th>Body</th><th>+/-</th><th>Postih</th></tr>'+
+    res.data.map(function(s){
+      var tag=s.postih?'<span class="tag-badge tag-'+s.postih+'">'+s.postih+'</span>':'—';
+      return '<tr style="border-top:.5px solid var(--border);font-size:12px">'+
+        '<td style="padding:4px;font-weight:500">'+esc(s.player_name)+'</td>'+
+        '<td style="padding:4px;text-align:center">'+s.team+'</td>'+
+        '<td style="padding:4px;text-align:center">'+s.body+'</td>'+
+        '<td style="padding:4px;text-align:center">'+(s.plus_minus>0?'+':'')+s.plus_minus+'</td>'+
+        '<td style="padding:4px;text-align:center">'+tag+'</td>'+
+        '</tr>';
+    }).join('')+'</table>';
+}
+
+async function smazatVysledek(matchId){
+  await sb.from('match_stats').delete().eq('match_id',matchId);
+  await sb.from('matches').delete().eq('id',matchId);
+  flash('Výsledek smazán.',true);
+  loadVysledkyList();
+  loadVysledekStatus();
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
 }
 
 function lockAdmin(){
@@ -739,7 +795,7 @@ function lockAdmin(){
 }
 async function loadAdminData(){
   await loadPlayers();
-  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus();
+  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus(); loadVysledkyList();
 }
 async function loadMatchDatetime(){
   var res=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
@@ -887,7 +943,12 @@ async function ulozitVysledek(){
   var skoreA=parseInt(document.getElementById('skore-a').value)||0;
   var skoreB=parseInt(document.getElementById('skore-b').value)||0;
   var matchDatum=document.getElementById('vysledek-datum').value||new Date().toISOString();
-  if(!matchDatum){flash('Vyber datum zápasu.',false);return;}
+  var losId=currentLos.id;
+
+  // Zkontroluj jestli výsledek pro tento los již existuje
+  var existing=await sb.from('matches').select('id').eq('los_id',losId).single();
+  if(existing.data){flash('Výsledek pro tento zápas již existuje. Použij tlačítko Upravit.',false);return;}
+
   var teamA=currentLos.team_a||[], teamB=currentLos.team_b||[];
 
   // Výsledek pro každý tým
@@ -898,7 +959,7 @@ async function ulozitVysledek(){
   var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
 
   // Ulož zápas
-  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB});
+  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId});
   if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
   var matchId=matchRes.data&&matchRes.data[0]&&matchRes.data[0].id;
 
@@ -939,12 +1000,11 @@ async function ulozitVysledek(){
 
   await sb.from('match_stats').insert(stats);
   flash('Výsledek uložen! Skóre '+skoreA+':'+skoreB,true);
-  // Ulož match_id pro možnost úpravy
   await sb.from('settings').upsert({key:'last_match_id',value:String(matchId)},{onConflict:'key'});
-  // Zablokuj tlačítko
   var btn=document.getElementById('btn-ulozit-vysledek');
   if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
   loadVysledekStatus();
+  loadVysledkyList();
 }
 
 // ── ADMIN AKCE ────────────────────────────────────────────────
