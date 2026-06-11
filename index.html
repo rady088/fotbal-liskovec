@@ -707,6 +707,8 @@ async function loadSekaPere(){
   ['seka-pere-sel','nahradnik1-sel','nahradnik2-sel'].forEach(function(id){
     document.getElementById(id).innerHTML=opts;
   });
+  var evSel=document.getElementById('evidence-hrac-sel');
+  if(evSel) evSel.innerHTML='<option value="">— vyber hráče —</option>'+playersList.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');
   if(cfg['seka_pere']) document.getElementById('seka-pere-sel').value=cfg['seka_pere'];
   if(cfg['nahradnik1']) document.getElementById('nahradnik1-sel').value=cfg['nahradnik1'];
   if(cfg['nahradnik2']) document.getElementById('nahradnik2-sel').value=cfg['nahradnik2'];
