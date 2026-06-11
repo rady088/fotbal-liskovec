@@ -959,9 +959,9 @@ async function ulozitVysledek(){
   var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
 
   // Ulož zápas
-  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId});
+  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
   if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
-  var matchId=matchRes.data&&matchRes.data[0]&&matchRes.data[0].id;
+  var matchId=matchRes.data&&matchRes.data.id;
 
   // Ulož statistiky hráčů
   var stats=[];
