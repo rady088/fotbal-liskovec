@@ -175,6 +175,11 @@
     .tag-a{background:#fff3cd;color:#856404}
     .tag-b{background:#fff0e0;color:#7a3b0a}
     .tag-c{background:#fde8e8;color:#c0392b}
+    .sub-tabs{display:flex;gap:5px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+    .sub-tab{padding:8px 14px;border-radius:20px;border:.5px solid var(--border);background:var(--surface);color:var(--text-muted);cursor:pointer;font-size:13px;white-space:nowrap;flex-shrink:0;font-family:inherit}
+    .sub-tab.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:500}
+    .sub-page{display:none}
+    .sub-page.active{display:block}
   </style>
 </head>
 <body>
@@ -297,8 +302,16 @@
       <div class="pin-error" id="pin-error">Špatný PIN</div>
     </div>
     <div id="admin-content" style="display:none">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="showSubTab('sub-zapas',this)">⚽ Zápas</button>
+        <button class="sub-tab" onclick="showSubTab('sub-vysledky',this)">📊 Výsledky</button>
+        <button class="sub-tab" onclick="showSubTab('sub-hraci',this)">👥 Hráči</button>
+        <button class="sub-tab" onclick="showSubTab('sub-akce',this)">📣 Akce</button>
+      </div>
 
-      <!-- Zápas -->
+      <!-- SUB: ZÁPAS -->
+      <div id="sub-zapas" class="sub-page active">
+        <!-- Zápas -->
       <div class="card">
         <div class="section-label">Zápas</div>
         <input type="datetime-local" id="match-datetime" style="margin-bottom:6px"/>
@@ -311,7 +324,7 @@
         <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
       </div>
 
-      <!-- Losování -->
+        <!-- Losování -->
       <div class="card">
         <div class="section-label" style="margin-bottom:10px">Losování</div>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
@@ -323,7 +336,47 @@
         <div id="los-history"><div class="loading">Načítám…</div></div>
       </div>
 
-      <!-- Výsledek zápasu -->
+        <!-- Reset -->
+        <div class="card">
+          <div class="section-label" style="margin-bottom:8px">Reset přihlášení</div>
+          <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Vymaže odpovědi Jdu/Nejdu před novým zápasem.</p>
+          <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
+        </div>
+        <!-- Seka/Pere -->
+      <div class="card">
+        <div class="section-label">Seka / Pere</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Kdo je zodpovědný za praní dresů a sekání hřiště.</p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Seka/Pere</div>
+          <select id="seka-pere-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 1</div>
+          <select id="nahradnik1-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 2</div>
+          <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+        </div>
+        <button class="btn-sm" style="width:100%;margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit</button>
+        <div class="admin-divider"></div>
+        <div class="section-label" style="margin-bottom:8px">Evidence sekání / praní</div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Po zápase zaznamenej kdo sekal/pral.</p>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select id="evidence-hrac-sel" style="flex:1;margin-bottom:0"><option value="">— vyber hráče —</option></select>
+          <select id="evidence-typ-sel" style="flex:1;margin-bottom:0">
+            <option value="seka">Sekání</option>
+            <option value="prani">Praní</option>
+          </select>
+          <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
+        </div>
+        <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
+        <div id="evidence-list"><div class="loading">Načítám…</div></div>
+      </div>
+
+      </div>
+
+      <!-- SUB: VÝSLEDKY -->
+      <div id="sub-vysledky" class="sub-page">
+        <!-- Výsledek zápasu -->
       <div class="card">
         <div class="section-label">Zadat výsledek zápasu</div>
         <div id="vysledek-status" style="display:none;background:var(--green-light);color:var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
@@ -363,43 +416,51 @@
         </div>
       </div>
 
-      <!-- Seznam výsledků -->
+        <!-- Seznam výsledků -->
       <div class="card">
         <div class="section-label" style="margin-bottom:8px">Zapsané výsledky</div>
         <div id="vysledky-list"><div class="loading">Načítám…</div></div>
       </div>
 
-      <!-- Seka/Pere -->
-      <div class="card">
-        <div class="section-label">Seka / Pere</div>
-        <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Kdo je zodpovědný za praní dresů a sekání hřiště.</p>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Seka/Pere</div>
-          <select id="seka-pere-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
+        <!-- Evidence sekání/praní - přesunuta sem -->
+        <div class="card">
+          <div class="section-label" style="margin-bottom:6px">Evidence sekání / praní</div>
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Po zápase zaznamenej kdo sekal/pral.</p>
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <select id="evidence-hrac-sel" style="flex:1;margin-bottom:0"><option value="">— vyber hráče —</option></select>
+            <select id="evidence-typ-sel" style="flex:1;margin-bottom:0">
+              <option value="seka">Sekání</option>
+              <option value="prani">Praní</option>
+            </select>
+            <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
+          </div>
+          <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
+          <div id="evidence-list"><div class="loading">Načítám…</div></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 1</div>
-          <select id="nahradnik1-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
-          <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 2</div>
-          <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
-        </div>
-        <button class="btn-sm" style="width:100%;margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit</button>
-        <div class="admin-divider"></div>
-        <div class="section-label" style="margin-bottom:8px">Evidence sekání / praní</div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Po zápase zaznamenej kdo sekal/pral.</p>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <select id="evidence-hrac-sel" style="flex:1;margin-bottom:0"><option value="">— vyber hráče —</option></select>
-          <select id="evidence-typ-sel" style="flex:1;margin-bottom:0">
-            <option value="seka">Sekání</option>
-            <option value="prani">Praní</option>
-          </select>
-          <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
-        </div>
-        <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
-        <div id="evidence-list"><div class="loading">Načítám…</div></div>
       </div>
 
-      <!-- Přidat akci -->
+      <!-- SUB: HRÁČI -->
+      <div id="sub-hraci" class="sub-page">
+        <!-- Hráči -->
+      <div class="card">
+        <div class="section-label">Přidat hráče</div>
+        <div class="add-row">
+          <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0" onkeydown="if(event.key==='Enter')adminAddPlayer()"/>
+          <input type="number" id="new-player-level" placeholder="Lvl" min="0" max="10" step="0.5" class="sm"/>
+          <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
+        </div>
+        <div class="section-label" style="margin-bottom:6px">Hráči & levely</div>
+        <div id="admin-players-list"><div class="loading">Načítám…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="height:100px"></div>
+      </div>
+
+      <!-- SUB: AKCE -->
+      <div id="sub-akce" class="sub-page">
+        <!-- Přidat akci -->
       <div class="card">
         <div class="section-label" id="akce-form-label">Přidat akci</div>
         <input type="hidden" id="akce-edit-id" value=""/>
@@ -415,27 +476,12 @@
         <div id="admin-akce-list"><div class="loading">Načítám…</div></div>
       </div>
 
-      <!-- Hráči -->
-      <div class="card">
-        <div class="section-label">Přidat hráče</div>
-        <div class="add-row">
-          <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0" onkeydown="if(event.key==='Enter')adminAddPlayer()"/>
-          <input type="number" id="new-player-level" placeholder="Lvl" min="0" max="10" step="0.5" class="sm"/>
-          <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
-        </div>
-        <div class="section-label" style="margin-bottom:6px">Hráči & levely</div>
-        <div id="admin-players-list"><div class="loading">Načítám…</div></div>
       </div>
 
-      <div class="card">
-        <div class="section-label" style="margin-bottom:8px">Nebezpečná zóna</div>
-        <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
-        <div style="margin-top:8px"><button class="btn-sm" style="width:100%;color:var(--text-muted)" onclick="lockAdmin()">Zamknout admin</button></div>
+      <div class="card" style="margin-top:8px">
+        <button class="btn-sm" style="width:100%;color:var(--text-muted)" onclick="lockAdmin()">Zamknout admin</button>
       </div>
     </div>
-  </div>
-</div>
-<div style="height:100px"></div>
 
 <nav class="bottom-nav">
   <button class="bottom-tab active" onclick="showPage('pg-prihlaseni',this)" data-page="pg-prihlaseni">
@@ -802,6 +848,13 @@ async function smazatVysledek(matchId){
   loadVysledekStatus();
   var btn=document.getElementById('btn-ulozit-vysledek');
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
+}
+
+function showSubTab(id, btn){
+  document.querySelectorAll('.sub-page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sub-tab').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
 }
 
 function lockAdmin(){
