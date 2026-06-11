@@ -725,14 +725,33 @@ async function editVysledek(){
   var res=await sb.from('settings').select('value').eq('key','last_match_id').single();
   if(!res.data||!res.data.value){flash('Žádný uložený výsledek.',false);return;}
   var matchId=parseInt(res.data.value);
-  // Smaž stats a zápas pro přepsání
+
+  // Načti existující výsledek
+  var mRes=await sb.from('matches').select('*').eq('id',matchId).single();
+  var sRes=await sb.from('match_stats').select('*').eq('match_id',matchId);
+
+  if(mRes.data){
+    document.getElementById('skore-a').value=mRes.data.score_t1||0;
+    document.getElementById('skore-b').value=mRes.data.score_t2||0;
+  }
+
+  // Předvyplň postihy
+  if(sRes.data){
+    sRes.data.forEach(function(s){
+      var el=document.getElementById('postih-'+s.player_name.replace(/ /g,'_'));
+      if(el&&s.postih) el.value=s.postih;
+    });
+  }
+
+  // Smaž původní záznamy pro přepsání
   await sb.from('match_stats').delete().eq('match_id',matchId);
   await sb.from('matches').delete().eq('id',matchId);
   await sb.from('settings').upsert({key:'last_match_id',value:''},{onConflict:'key'});
+
   document.getElementById('vysledek-status').style.display='none';
   var btn=document.getElementById('btn-ulozit-vysledek');
   if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
-  flash('Výsledek smazán — zadej nový.',true);
+  flash('Výsledek načten — uprav a ulož znovu.',true);
   loadVysledkyList();
 }
 
