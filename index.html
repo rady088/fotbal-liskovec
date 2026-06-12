@@ -362,7 +362,7 @@
         <div class="card">
           <div class="section-label" style="margin-bottom:8px">Reset přihlášení</div>
           <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Vymaže odpovědi Jdu/Nejdu před novým zápasem.</p>
-          <button class="btn-danger" onclick="adminReset()">🗑 Resetovat přihlášení</button>
+          <button class="btn-danger" onclick="adminReset()">🗑 Reset přihlášení a losu</button>
         </div>
 
       </div>
@@ -1870,12 +1870,12 @@ async function adminReset(){
   if(lastLos.data&&lastLos.data.length){
     await sb.from('los_history').delete().eq('id',lastLos.data[0].id);
   }
+  await sb.from('settings').upsert({key:'los_reset',value:'1'},{onConflict:'key'});
   var btn=document.getElementById('btn-save-los');
   if(btn) btn.style.display='none';
   currentDraft=null; currentLos=null;
   flash('Přihlášení a los resetovány.',true);
   await loadRsvp();
-  // Znovu načti los-result-area (zobrazí Seka/Pere + prázdný los)
   await loadLosResult();
 }
 
@@ -2030,6 +2030,7 @@ async function saveLos(){
   } else {
     await sb.from('los_history').insert({team_a:currentDraft.teamA,team_b:currentDraft.teamB,match_date:matchDate});
     flash('Los uložen!',true);
+  await sb.from('settings').upsert({key:'los_reset',value:'0'},{onConflict:'key'});
   }
   currentDraft=null;
   document.getElementById('btn-save-los').style.display='none';
@@ -2038,14 +2039,20 @@ async function saveLos(){
   if(adminUnlocked) loadPostihyForm();
 }
 async function loadLosResult(){
-  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   var area=document.getElementById('los-result-area');
-  var sekRes=await sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']);
+  // Načti Seka/Pere
+  var sekRes=await sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2','los_reset']);
   var cfg={}; (sekRes.data||[]).forEach(function(r){cfg[r.key]=r.value;});
   var sekaHtml='';
   if(cfg['seka_pere']){
-    sekaHtml='<div class="seka-card"><div class="seka-title">Seka / Pere</div><div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+(cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']||'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':'')+  (cfg['nahradnik2']||'')+'</div>':'')+  '</div>';
+    sekaHtml='<div class="seka-card"><div class="seka-title">Seka / Pere</div><div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+(cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']||'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':''+(cfg['nahradnik2']||''))+'</div>':'')+  '</div>';
   }
+  // Pokud byl los resetován, nezobrazuj starý los
+  if(cfg['los_reset']==='1'){
+    area.innerHTML=sekaHtml+'<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
+    return;
+  }
+  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   if(!res.data||!res.data.length){
     area.innerHTML=sekaHtml+'<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
     return;
