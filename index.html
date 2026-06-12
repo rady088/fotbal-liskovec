@@ -1864,18 +1864,19 @@ async function adminRemovePlayer(name){
   await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
 }
 async function adminReset(){
-  if(!confirm('Opravdu resetovat všechna přihlášení?')) return;
+  if(!confirm('Opravdu resetovat přihlášení a aktuální los?')) return;
   await sb.from('rsvp').delete().neq('player_name','___x___');
-  await sb.from('los_history').delete().gt('id',0);
-  // Okamžitě vymaž los z UI
-  var area=document.getElementById('los-result-area');
-  if(area) area.innerHTML='<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
+  var lastLos=await sb.from('los_history').select('id').order('created_at',{ascending:false}).limit(1);
+  if(lastLos.data&&lastLos.data.length){
+    await sb.from('los_history').delete().eq('id',lastLos.data[0].id);
+  }
   var btn=document.getElementById('btn-save-los');
   if(btn) btn.style.display='none';
-  currentDraft=null;
-  currentLos=null;
+  currentDraft=null; currentLos=null;
   flash('Přihlášení a los resetovány.',true);
   await loadRsvp();
+  // Znovu načti los-result-area (zobrazí Seka/Pere + prázdný los)
+  await loadLosResult();
 }
 
 // ── LOS ALGORITMUS ────────────────────────────────────────────
@@ -2039,13 +2040,23 @@ async function saveLos(){
 async function loadLosResult(){
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   var area=document.getElementById('los-result-area');
-  if(!res.data||!res.data.length){area.innerHTML='<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';return;}
+  var sekRes=await sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']);
+  var cfg={}; (sekRes.data||[]).forEach(function(r){cfg[r.key]=r.value;});
+  var sekaHtml='';
+  if(cfg['seka_pere']){
+    sekaHtml='<div class="seka-card"><div class="seka-title">Seka / Pere</div><div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+(cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']||'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':'')+  (cfg['nahradnik2']||'')+'</div>':'')+  '</div>';
+  }
+  if(!res.data||!res.data.length){
+    area.innerHTML=sekaHtml+'<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
+    return;
+  }
   var last=res.data[0];
   var all=[...(last.team_a||[]),...(last.team_b||[])];
   var pRes=await sb.from('players').select('name,level').in('name',all);
   var lm={}; (pRes.data||[]).forEach(function(p){lm[p.name]=parseFloat(p.level)||0;});
   renderLos(last.team_a||[],last.team_b||[],lm,true,false);
 }
+
 async function loadLosHistory(){
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(10);
   var el=document.getElementById('los-history');
