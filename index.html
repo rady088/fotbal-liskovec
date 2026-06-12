@@ -1866,10 +1866,16 @@ async function adminRemovePlayer(name){
 async function adminReset(){
   if(!confirm('Opravdu resetovat všechna přihlášení?')) return;
   await sb.from('rsvp').delete().neq('player_name','___x___');
-  await sb.from('los_history').delete().neq('id',0);
+  await sb.from('los_history').delete().gt('id',0);
+  // Okamžitě vymaž los z UI
+  var area=document.getElementById('los-result-area');
+  if(area) area.innerHTML='<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
+  var btn=document.getElementById('btn-save-los');
+  if(btn) btn.style.display='none';
+  currentDraft=null;
+  currentLos=null;
   flash('Přihlášení a los resetovány.',true);
   await loadRsvp();
-  await loadLosResult();
 }
 
 // ── LOS ALGORITMUS ────────────────────────────────────────────
