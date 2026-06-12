@@ -452,7 +452,7 @@
         <div class="section-label" id="akce-form-label">Přidat akci</div>
         <input type="hidden" id="akce-edit-id" value=""/>
         <input type="text" id="akce-nazev" placeholder="Název akce (brigáda, zakončení...)"/>
-        <input type="datetime-local" id="akce-datum"/>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Datum akce</div><input type="datetime-local" id="akce-datum"/>
         <textarea id="akce-popis" placeholder="Popis akce…"></textarea>
         <div style="display:flex;gap:8px">
           <button class="btn-primary" style="flex:1" onclick="adminSaveAkce()">💾 Uložit akci</button>
@@ -1125,7 +1125,7 @@ async function adminSaveAkce(){
   var editId=document.getElementById('akce-edit-id').value;
   if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
   if(editId){
-    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',editId);
+    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',parseInt(editId));
     if(upd.error){flash('Chyba při úpravě: '+upd.error.message,false);return;}
     flash('Akce upravena!',true);
   } else {
