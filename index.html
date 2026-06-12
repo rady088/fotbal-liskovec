@@ -229,11 +229,6 @@
   <!-- LOS -->
   <div id="pg-los" class="page">
     <div id="los-result-area"><div class="loading">Načítám…</div></div>
-    <div id="los-share-btn-wrap" style="display:none;margin-bottom:1rem">
-      <button class="btn-outline" onclick="sdíletLos()" style="display:flex;align-items:center;justify-content:center;gap:8px">
-        📸 Sdílet los
-      </button>
-    </div>
   </div>
 
   <!-- POŘADÍ -->
@@ -2004,7 +1999,6 @@ function renderLos(tA,tB,lm,saved,adminView){
 
     // Veřejná záložka Los
     var publicEl=document.getElementById('los-result-area');
-    var sw=document.getElementById('los-share-btn-wrap');if(sw)sw.style.display='block';
     if(publicEl){
       publicEl.innerHTML=sekaHtml+
         '<div class="card">'+
@@ -2017,7 +2011,10 @@ function renderLos(tA,tB,lm,saved,adminView){
       var draftEl=document.getElementById('los-draft-area');
       if(draftEl) draftEl.innerHTML='<div class="card" style="background:var(--bg)">'+
         '<div class="section-label" style="margin-bottom:8px">Náhled losu (s levely)</div>'+
-        adminTeamsHtml+'</div>';
+        adminTeamsHtml+'</div>'+
+        '<div style="margin-top:1rem">'+
+        '<button class="btn-outline" onclick="sdiletLos()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%">📸 Sdílet los</button>'+
+        '</div>'+'</div>';
     }
   });
 }
@@ -2056,13 +2053,11 @@ async function loadLosResult(){
   }
   // Pokud byl los resetován, nezobrazuj starý los
   if(cfg['los_reset']==='1'){
-    var sw=document.getElementById('los-share-btn-wrap');if(sw)sw.style.display='none';
     area.innerHTML=sekaHtml+'<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
     return;
   }
   var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
   if(!res.data||!res.data.length){
-    var sw=document.getElementById('los-share-btn-wrap');if(sw)sw.style.display='none';
     area.innerHTML=sekaHtml+'<div class="empty" style="padding:3rem">🎲<br><br>Los ještě nebyl spuštěn.</div>';
     return;
   }
@@ -2088,7 +2083,7 @@ async function loadLosHistory(){
 
 
 // ── SDÍLET LOS ────────────────────────────────────────────
-async function sdíletLos(){
+async function sdiletLos(){
   var area=document.getElementById('los-result-area');
   if(!area) return;
   try {
