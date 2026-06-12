@@ -2003,7 +2003,10 @@ function renderLos(tA,tB,lm,saved,adminView){
       publicEl.innerHTML=sekaHtml+
         '<div class="card">'+
         '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Los — '+(document.getElementById('match-label').textContent.split('·')[0].trim()||'aktuální'):'🎲 Návrh losu')+'</div>'+
-        publicTeamsHtml+'</div>';
+        publicTeamsHtml+'</div>'+
+        '<div style="margin-top:1rem">'+
+        '<button class="btn-outline" onclick="sdiletLos()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%">📸 Sdílet los</button>'+
+        '</div>';
     }
 
     // Admin náhled (draft)
@@ -2011,10 +2014,7 @@ function renderLos(tA,tB,lm,saved,adminView){
       var draftEl=document.getElementById('los-draft-area');
       if(draftEl) draftEl.innerHTML='<div class="card" style="background:var(--bg)">'+
         '<div class="section-label" style="margin-bottom:8px">Náhled losu (s levely)</div>'+
-        adminTeamsHtml+'</div>'+
-        '<div style="margin-top:1rem">'+
-        '<button class="btn-outline" onclick="sdiletLos()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%">📸 Sdílet los</button>'+
-        '</div>'+'</div>';
+        adminTeamsHtml+'</div>';
     }
   });
 }
