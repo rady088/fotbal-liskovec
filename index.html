@@ -1385,18 +1385,6 @@ async function respond(going){
 }
 
 // ── POŘADÍ ────────────────────────────────────────────────────
-async function loadStats(){
-  var res=await sb.from('match_stats').select('*');
-  if(!res.data||!res.data.length) return {};
-  var agg={};
-  res.data.forEach(function(r){
-    if(!agg[r.player_name]) agg[r.player_name]={ucast:0,body:0,plus_minus:0};
-    agg[r.player_name].ucast++;
-    agg[r.player_name].body+=(r.body||0);
-    agg[r.player_name].plus_minus+=(r.plus_minus||0);
-  });
-  return agg;
-}
 function rankArr(arr,fn,asc){
   var s=[...arr].sort((a,b)=>asc?fn(a)-fn(b):fn(b)-fn(a));
   var r=1; s.forEach(function(x,i){if(i>0&&fn(s[i])===fn(s[i-1]))x._r=s[i-1]._r;else x._r=r;r++;});
