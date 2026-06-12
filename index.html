@@ -1374,6 +1374,54 @@ async function loadAdminAkce(){
 }
 
 
+// ── ADMIN PLAYERS ─────────────────────────────────────────────
+async function loadAdminPlayers(){
+  var res=await sb.from('players').select('name,level').order('name');
+  var list=document.getElementById('admin-players-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Žádní hráči</div>';return;}
+  list.innerHTML=res.data.map(function(p){
+    return '<div class="apr"><span class="pn">'+esc(p.name)+'</span>'+
+      '<input type="number" class="sm" value="'+(p.level||0)+'" min="0" max="10" step="0.5" onchange="updateLevel(\''+esc(p.name)+'\',this.value)" title="Level"/>'+
+      '<button class="btn-rm" onclick="adminRemovePlayer(\''+esc(p.name)+'\')">✕</button></div>';
+  }).join('');
+}
+async function updateLevel(name,val){await sb.from('players').update({level:parseFloat(val)||0}).eq('name',name);}
+async function adminAddPlayer(){
+  var name=document.getElementById('new-player-input').value.trim();
+  var level=parseFloat(document.getElementById('new-player-level').value)||0;
+  if(!name) return;
+  var res=await sb.from('players').insert({name,level});
+  if(res.error){flash('Hráč již existuje nebo chyba.',false);return;}
+  document.getElementById('new-player-input').value='';
+  document.getElementById('new-player-level').value='';
+  flash(name+' přidán.',true);
+  await loadAdminPlayers(); await loadPlayers();
+}
+async function adminRemovePlayer(name){
+  if(!confirm('Odebrat hráče "'+name+'"?')) return;
+  await sb.from('players').delete().eq('name',name);
+  flash(name+' odebrán.',true);
+  await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
+}
+
+async function adminReset(){
+  if(!confirm('Opravdu resetovat přihlášení a aktuální los?')) return;
+  await sb.from('rsvp').delete().neq('player_name','___x___');
+  await sb.from('settings').upsert({key:'los_reset',value:'1'},{onConflict:'key'});
+  var btn=document.getElementById('btn-save-los');
+  if(btn) btn.style.display='none';
+  currentDraft=null; currentLos=null;
+  flash('Přihlášení a los resetovány.',true);
+  await loadRsvp();
+  await loadLosResult();
+}
+
+function editAkceById(id){
+  var row=document.getElementById('akce-row-'+id);
+  if(!row) return;
+  adminEditAkce(id, row.dataset.nazev.replace(/&quot;/g,'"'), row.dataset.datum, row.dataset.popis.replace(/&quot;/g,'"'));
+}
+
 // ── LOS ALGORITMUS ────────────────────────────────────────────
 async function spustLos(){
   var rsvpRes=await sb.from('rsvp').select('player_name').eq('going',true);
