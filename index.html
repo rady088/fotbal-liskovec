@@ -2163,7 +2163,7 @@ async function loadLosResult(){
   var cfg={}; (sekRes.data||[]).forEach(function(r){cfg[r.key]=r.value;});
   var sekaHtml='';
   if(cfg['seka_pere']){
-    sekaHtml='<div class="seka-card"><div class="seka-title">Seka / Pere</div><div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+(cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']||'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':''+(cfg['nahradnik2']||''))+'</div>':'')+  '</div>';
+    sekaHtml='<div class="seka-card"><div class="seka-title">Seka / Pere</div><div class="seka-name">'+esc(cfg['seka_pere'])+'</div>'+(cfg['nahradnik1']||cfg['nahradnik2']?'<div class="seka-sub">Náhradníci: '+(cfg['nahradnik1']||'')+(cfg['nahradnik1']&&cfg['nahradnik2']?' · ':'')+(cfg['nahradnik2']||'')+'</div>':'')+  '</div>';
   }
   // Pokud byl los resetován, nezobrazuj starý los
   if(cfg['los_reset']==='1'){
