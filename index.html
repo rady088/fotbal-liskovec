@@ -1127,7 +1127,9 @@ async function adminSaveAkce(){
   var editId=document.getElementById('akce-edit-id').value;
   if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
   if(editId){
-    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',parseInt(editId));
+    var eid=parseInt(editId);
+    if(!eid){flash('Chyba: neplatné ID akce.',false);return;}
+    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',eid);
     if(upd.error){flash('Chyba při úpravě: '+upd.error.message,false);return;}
     flash('Akce upravena!',true);
   } else {
@@ -1135,7 +1137,667 @@ async function adminSaveAkce(){
     if(ins.error){flash('Chyba: '+ins.error.message,false);return;}
     flash('Akce přidána!',true);
   }
-  adminCancelEditAkce(); loadAdminAkce();
+  adminCancelEditAkce();
+  loadAdminAkce();
+  loadAkce();
+}
+function editAkceById(id){
+  var row=document.getElementById('akce-row-'+id);
+  if(!row) return;
+  adminEditAkce(id, row.dataset.nazev.replace(/&quot;/g,'"'), row.dataset.datum, row.dataset.popis.replace(/&quot;/g,'"'));
+}
+function adminCancelEditAkce(){
+  document.getElementById('akce-nazev').value='';
+  document.getElementById('akce-datum').value='';
+  document.getElementById('akce-popis').value='';
+  document.getElementById('akce-edit-id').value='';
+  document.getElementById('akce-form-label').textContent='Přidat akci';
+  document.getElementById('akce-cancel-btn').style.display='none';
+}
+function adminEditAkce(id,nazev,datum,popis){
+  document.getElementById('akce-edit-id').value=id;
+  document.getElementById('akce-nazev').value=nazev;
+  document.getElementById('akce-datum').value=datum.slice(0,16);
+  document.getElementById('akce-popis').value=popis||'';
+  document.getElementById('akce-form-label').textContent='Upravit akci';
+  document.getElementById('akce-cancel-btn').style.display='inline-block';
+  document.getElementById('akce-nazev').focus();
+  window.scrollTo(0,0);
+}
+async function adminDeleteAkce(id,nazev){
+  if(!confirm('Smazat akci "'+nazev+'"?')) return;
+  await sb.from('akce').delete().eq('id',id);
+  flash('Akce "'+nazev+'" smazána.',true);
+  loadAdminAkce();
+}
+async function loadAdminAkce(){
+  var res=await sb.from('akce').select('*').order('datum',{ascending:false});
+  var list=document.getElementById('admin-akce-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Žádné akce</div>';return;}
+  list.innerHTML=res.data.map(function(a){
+    var d=new Date(a.datum);
+    var dateStr=d.toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'})+' '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    var ne=esc(a.nazev), pe=esc(a.popis||''), de=a.datum||'';
+    var div=document.createElement('div');
+    div.className='apr';
+    div.id='akce-row-'+a.id;
+    div.dataset.id=a.id;
+    div.dataset.nazev=a.nazev||'';
+    div.dataset.datum=de;
+    div.dataset.popis=a.popis||'';
+    div.innerHTML='<div style="flex:1"><div class="pn">'+ne+'</div><div style="font-size:11px;color:var(--text-muted)">'+dateStr+'</div></div>'+
+      '<button class="btn-sm" style="padding:4px 8px;font-size:12px" onclick="editAkceById('+a.id+')">✏️</button>'+
+      '<button class="btn-rm" onclick="adminDeleteAkce('+a.id+',\''+ne.replace(/'/g,"&#39;")+'\')" >✕</button>';
+    return div.outerHTML;
+  }).join('');
+}
+
+
+async function loadSettings(){
+  var res=await sb.from('settings').select('key,value');
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  var label=cfg['match_label']||'Nejbližší zápas';
+  var venue=cfg['match_venue']?'📍 '+cfg['match_venue']:'';
+  document.getElementById('match-label').textContent=label;
+  document.getElementById('match-venue').textContent=venue;
+  var losLabel=document.getElementById('match-label-los');
+  var losVenue=document.getElementById('match-venue-los');
+  if(losLabel) losLabel.textContent=label;
+  if(losVenue) losVenue.textContent=venue;
+  renderNextReset(cfg['match_datetime']||null);
+}
+function renderNextReset(dt){
+  var el=document.getElementById('next-reset');
+  if(!dt){el.textContent='Datum zápasu není nastaveno.';return;}
+  var r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+  el.textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── PLAYERS ───────────────────────────────────────────────────
+async function loadPlayers(){
+  var res=await sb.from('players').select('name').order('name');
+  playersList=(res.data||[]).map(p=>p.name);
+  var sel=document.getElementById('player-select');
+  sel.innerHTML='<option value="">— vyber své jméno —</option>';
+  playersList.forEach(function(n){var o=document.createElement('option');o.value=o.textContent=n;sel.appendChild(o);});
+}
+
+// ── RSVP ──────────────────────────────────────────────────────
+async function loadRsvp(){
+  var res=await sb.from('rsvp').select('player_name,going').order('updated_at',{ascending:false});
+  var rows=res.data||[], go=rows.filter(r=>r.going), nogo=rows.filter(r=>!r.going);
+  document.getElementById('cnt-go').textContent=go.length;
+  var list=document.getElementById('rsvp-list');
+  if(!rows.length){list.innerHTML='<div class="empty">Zatím žádné odpovědi</div>';return;}
+  list.innerHTML=[...go,...nogo].map(r=>
+    '<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span>'+
+    '<span class="badge '+(r.going?'badge-go':'badge-nogo')+'">'+(r.going?'Jdu':'Nejdu')+'</span></div>'
+  ).join('');
+}
+async function respond(going){
+  var name=document.getElementById('player-select').value||document.getElementById('player-new').value.trim();
+  if(!name){flash('Nejdřív vyber nebo napiš své jméno.',false);return;}
+  await sb.from('players').upsert({name},{onConflict:'name',ignoreDuplicates:true});
+  var res=await sb.from('rsvp').upsert({player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'player_name'});
+  if(res.error){flash('Chyba při ukládání.',false);return;}
+  flash(going?'Super, '+name+' — těšíme se! 👍':'Škoda, '+name+' — příště snad!',going);
+  document.getElementById('player-select').value='';
+  document.getElementById('player-new').value='';
+  await loadPlayers(); await loadRsvp();
+}
+sb.channel('rsvp').on('postgres_changes',{event:'*',schema:'public',table:'rsvp'},loadRsvp).subscribe();
+
+// ── POŘADÍ ────────────────────────────────────────────────────
+async function loadStats(){
+  var res=await sb.from('match_stats').select('*');
+  if(!res.data||!res.data.length) return {};
+  var agg={};
+  res.data.forEach(function(r){
+    if(!agg[r.player_name]) agg[r.player_name]={ucast:0,body:0,plus_minus:0};
+    agg[r.player_name].ucast++;
+    agg[r.player_name].body+=(r.body||0);
+    agg[r.player_name].plus_minus+=(r.plus_minus||0);
+  });
+  return agg;
+}
+function rankArr(arr,fn,asc){
+  var s=[...arr].sort((a,b)=>asc?fn(a)-fn(b):fn(b)-fn(a));
+  var r=1; s.forEach(function(x,i){if(i>0&&fn(s[i])===fn(s[i-1]))x._r=s[i-1]._r;else x._r=r;r++;});
+  return s;
+}
+function rowClass(rank,total){
+  if(rank===1) return 'row-gold';
+  if(rank<=Math.ceil(total*.25)) return 'row-orange';
+  if(rank>=total-Math.floor(total*.2)) return 'row-red';
+  return 'row-lgreen';
+}
+async function renderPoradi(){
+  var stats=await loadStats();
+  var arr=Object.entries(stats).map(function(e){return Object.assign({name:e[0]},e[1]);});
+  if(!arr.length){document.getElementById('poradi-body').innerHTML='<tr><td colspan="7" class="empty">Žádná data.</td></tr>';return;}
+  var tg=await sb.from('matches').select('*',{count:'exact',head:true});
+  var totalGames=tg.count||0;
+  rankArr(arr,function(s){return s.ucast;},false).forEach(function(s){s.zebUcast=s._r;});
+  rankArr(arr,function(s){return s.body;},false).forEach(function(s){s.zebBody=s._r;});
+  rankArr(arr,function(s){return s.plus_minus;},false).forEach(function(s){s.zebPM=s._r;});
+  arr.forEach(function(s){s.soucet=(s.zebUcast||0)+(s.zebBody||0)+(s.zebPM||0);});
+  arr.sort((a,b)=>a.soucet-b.soucet);
+  var fr=1;
+  arr.forEach(function(s,i){if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
+  var total=arr.length;
+  document.getElementById('poradi-body').innerHTML=arr.map(function(s){
+    var rc=rowClass(s.rank,total);
+    var rb='<span class="rank-badge '+(s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn')+'">'+s.rank+'</span>';
+    var ap=totalGames>0&&s.ucast/totalGames>0.6;
+    return '<tr class="'+rc+'"><td>'+rb+'</td><td>'+esc(s.name)+'</td><td><strong>'+s.soucet+'</strong></td><td>'+(s.zebUcast||'—')+'</td><td>'+(s.zebBody||'—')+'</td><td>'+(s.zebPM||'—')+'</td>'+
+      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td></tr>';
+  }).join('');
+}
+
+// ── AKCE ──────────────────────────────────────────────────────
+async function loadAkce(){
+  var res=await sb.from('akce').select('*').order('datum',{ascending:true});
+  var list=document.getElementById('akce-list');
+  if(!res.data||!res.data.length){
+    list.innerHTML='<div class="akce-empty empty"><p style="margin-top:1rem">Zatím žádné akce.<br>Admin přidá první akci.</p></div>';
+    return;
+  }
+  var allIds=res.data.map(a=>a.id);
+  var rsvpRes=await sb.from('akce_rsvp').select('akce_id,player_name,going').in('akce_id',allIds);
+  var rsvpMap={};
+  (rsvpRes.data||[]).forEach(function(r){if(!rsvpMap[r.akce_id])rsvpMap[r.akce_id]=[];rsvpMap[r.akce_id].push(r);});
+  var now=new Date();
+  var playerOpts=playersList.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  list.innerHTML=res.data.map(function(a){
+    var d=new Date(a.datum), past=d<now;
+    var dateStr=d.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+    var rsvps=rsvpMap[a.id]||[];
+    var goList=rsvps.filter(r=>r.going), nogoList=rsvps.filter(r=>!r.going);
+    var rows=goList.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-go">Jdu</span></div>').join('')+
+      nogoList.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-nogo">Nejdu</span></div>').join('');
+    return '<div class="akce-card" id="akce-'+a.id+'">'+
+      '<div class="akce-header"><div class="akce-title">'+esc(a.nazev)+'</div>'+
+      '<span class="akce-tag '+(past?'akce-tag-past':'akce-tag-future')+'">'+(past?'Proběhlo':'Nadcházející')+'</span></div>'+
+      '<div class="akce-date">📅 '+dateStr+'</div>'+
+      (a.popis?'<div class="akce-desc">'+esc(a.popis)+'</div>':'')+
+      (!past?'<div style="margin-bottom:12px"><select id="akce-sel-'+a.id+'" style="margin-bottom:8px"><option value="">— vyber své jméno —</option>'+playerOpts+'</select>'+
+        '<div style="display:flex;gap:8px"><button class="btn-akce-go" style="flex:1" onclick="respondAkce('+a.id+',true)">✓ Zúčastním se</button>'+
+        '<button class="btn-akce-nogo" style="flex:1;padding:9px" onclick="respondAkce('+a.id+',false)">✕ Nezúčastním se</button></div></div>':'')+
+      '<div style="font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px" id="akce-lbl-'+a.id+'">Účastníci ('+goList.length+' jdou · '+nogoList.length+' nejdou)</div>'+
+      '<div id="akce-participants-'+a.id+'">'+(rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>')+'</div></div>';
+  }).join('');
+}
+async function respondAkce(akceId,going){
+  var sel=document.getElementById('akce-sel-'+akceId);
+  var name=sel?sel.value:'';
+  if(!name){flash('Nejdřív vyber své jméno.',false);return;}
+  await sb.from('akce_rsvp').upsert({akce_id:akceId,player_name:name,going,updated_at:new Date().toISOString()},{onConflict:'akce_id,player_name'});
+  flash(going?'Super, '+name+' — těšíme se!':'Škoda, '+name+' — příště snad!',going);
+  var res=await sb.from('akce_rsvp').select('player_name,going').eq('akce_id',akceId);
+  var goL=(res.data||[]).filter(r=>r.going), nogoL=(res.data||[]).filter(r=>!r.going);
+  var rows=goL.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-go">Jdu</span></div>').join('')+
+    nogoL.map(r=>'<div class="player-row"><span style="font-weight:500;font-size:13px">'+esc(r.player_name)+'</span><span class="badge badge-nogo">Nejdu</span></div>').join('');
+  var el=document.getElementById('akce-participants-'+akceId);
+  var lbl=document.getElementById('akce-lbl-'+akceId);
+  if(el) el.innerHTML=rows||'<div class="empty" style="padding:.75rem">Zatím nikdo neodpověděl</div>';
+  if(lbl) lbl.textContent='Účastníci ('+goL.length+' jdou · '+nogoL.length+' nejdou)';
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+function unlockAdmin(){
+  if(document.getElementById('admin-pin').value===ADMIN_PIN){
+    adminUnlocked=true;
+    document.getElementById('admin-pin-screen').style.display='none';
+    document.getElementById('admin-content').style.display='block';
+    loadAdminData();
+  } else {
+    document.getElementById('pin-error').classList.add('show');
+    document.getElementById('admin-pin').value='';
+  }
+}
+async function pridatEvidenci(){
+  var name=document.getElementById('evidence-hrac-sel').value;
+  var typ=document.getElementById('evidence-typ-sel').value;
+  if(!name){flash('Vyber hráče.',false);return;}
+  var res=await sb.from('seka_evidence').insert({player_name:name,typ:typ,datum:new Date().toISOString()});
+  if(res.error){flash('Chyba: '+res.error.message,false);return;}
+  flash((typ==='seka'?'Sekání':'Praní')+' zaznamenáno pro '+name+'.',true);
+  document.getElementById('evidence-hrac-sel').value='';
+  loadEvidenceCounts();
+}
+
+async function loadEvidenceCounts(){
+  var el=document.getElementById('evidence-list');
+  if(!el) return;
+  var res=await sb.from('seka_evidence').select('player_name,typ');
+  if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádné záznamy</div>';return;}
+  var counts={};
+  res.data.forEach(function(r){
+    if(!counts[r.player_name]) counts[r.player_name]={seka:0,prani:0};
+    counts[r.player_name][r.typ]=(counts[r.player_name][r.typ]||0)+1;
+  });
+  var arr=Object.entries(counts).map(function(e){return {name:e[0],seka:e[1].seka||0,prani:e[1].prani||0};});
+  arr.sort(function(a,b){return (a.seka+a.prani)-(b.seka+b.prani);});
+  el.innerHTML='<table style="width:100%;font-size:13px;border-collapse:collapse">'+
+    '<thead><tr style="background:var(--green);color:#fff">'+
+    '<th style="padding:7px 10px;text-align:left">Hráč</th>'+
+    '<th style="padding:7px 10px;text-align:center">Sekání</th>'+
+    '<th style="padding:7px 10px;text-align:center">Praní</th>'+
+    '<th style="padding:7px 10px;text-align:center">Celkem</th>'+
+    '</tr></thead><tbody>'+
+    arr.map(function(p){
+      return '<tr style="border-bottom:.5px solid var(--border)">'+
+        '<td style="padding:7px 10px;font-weight:500">'+esc(p.name)+'</td>'+
+        '<td style="padding:7px 10px;text-align:center">'+p.seka+'</td>'+
+        '<td style="padding:7px 10px;text-align:center">'+p.prani+'</td>'+
+        '<td style="padding:7px 10px;text-align:center;font-weight:600">'+(p.seka+p.prani)+'</td>'+
+        '</tr>';
+    }).join('')+'</tbody></table>';
+}
+
+async function loadVysledekStatus(){
+  var statusEl=document.getElementById('vysledek-status');
+  if(!statusEl) return;
+  // Zkontroluj jestli pro aktuálně vybraný los existuje výsledek
+  if(!currentLos){statusEl.style.display='none';return;}
+  var losId=currentLos.id;
+  var mRes=await sb.from('matches').select('id,match_date,score_t1,score_t2').eq('los_id',losId).single();
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(!mRes.data){
+    statusEl.style.display='none';
+    if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
+    return;
+  }
+  var d=new Date(mRes.data.match_date).toLocaleDateString('cs-CZ',{day:'numeric',month:'numeric',year:'numeric'});
+  document.getElementById('vysledek-status-text').textContent='✅ Výsledek uložen: '+d+' · '+mRes.data.score_t1+':'+mRes.data.score_t2;
+  statusEl.style.display='flex';
+  if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
+}
+
+async function editVysledek(){
+  if(!currentLos){flash('Nejprve vyber zápas.',false);return;}
+  if(!confirm('Opravdu upravit výsledek? Stávající záznam bude smazán.')) return;
+  var mCheck=await sb.from('matches').select('id').eq('los_id',currentLos.id).single();
+  if(!mCheck.data){flash('Žádný uložený výsledek pro tento zápas.',false);return;}
+  var matchId=parseInt(mCheck.data.id);
+
+  // Načti existující výsledek
+  var mRes=await sb.from('matches').select('*').eq('id',matchId).single();
+  var sRes=await sb.from('match_stats').select('*').eq('match_id',matchId);
+
+  if(mRes.data){
+    document.getElementById('skore-a').value=mRes.data.score_t1||0;
+    document.getElementById('skore-b').value=mRes.data.score_t2||0;
+  }
+
+  // Předvyplň postihy
+  if(sRes.data){
+    sRes.data.forEach(function(s){
+      var el=document.getElementById('postih-'+s.player_name.replace(/ /g,'_'));
+      if(el&&s.postih) el.value=s.postih;
+    });
+  }
+
+  // Smaž původní záznamy pro přepsání
+  await sb.from('match_stats').delete().eq('match_id',matchId);
+  await sb.from('matches').delete().eq('id',matchId);
+  await sb.from('settings').upsert({key:'last_match_id',value:''},{onConflict:'key'});
+
+  document.getElementById('vysledek-status').style.display='none';
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
+  flash('Výsledek načten — uprav a ulož znovu.',true);
+  loadVysledkyList();
+}
+
+async function loadVysledkyList(){
+  var el=document.getElementById('vysledky-list');
+  if(!el) return;
+  var res=await sb.from('matches').select('*').order('match_date',{ascending:false}).limit(20);
+  if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádné výsledky</div>';return;}
+  el.innerHTML=res.data.map(function(m){
+    var d=new Date(m.match_date).toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'});
+    var res_txt=m.score_t1>m.score_t2?'Výhra Team 1':m.score_t1<m.score_t2?'Výhra Team 2':'Remíza';
+    return '<div class="apr" style="flex-direction:column;align-items:stretch;gap:4px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+        '<div><div style="font-weight:600;font-size:14px">'+m.score_t1+' : '+m.score_t2+'</div>'+
+        '<div style="font-size:12px;color:var(--text-muted)">'+d+' · '+res_txt+'</div></div>'+
+        '<button class="btn-sm" style="font-size:12px;color:var(--red)" onclick="smazatVysledek('+m.id+')">🗑 Smazat</button>'+
+      '</div>'+
+      '<div id="stats-'+m.id+'" style="font-size:12px;color:var(--text-muted);margin-top:4px"><button class="btn-sm" style="font-size:11px;width:100%" onclick="toggleStats('+m.id+')">Zobrazit postihy</button></div>'+
+    '</div>';
+  }).join('');
+}
+
+async function toggleStats(matchId){
+  var el=document.getElementById('stats-'+matchId);
+  if(el.dataset.loaded){el.innerHTML='<button class="btn-sm" style="font-size:11px;width:100%" onclick="toggleStats('+matchId+')">Zobrazit postihy</button>';el.dataset.loaded='';return;}
+  var res=await sb.from('match_stats').select('player_name,team,body,plus_minus,postih').eq('match_id',matchId).order('team');
+  if(!res.data||!res.data.length){el.innerHTML='<em>Žádné záznamy</em>';return;}
+  el.dataset.loaded='1';
+  el.innerHTML='<table style="width:100%;border-collapse:collapse;margin-top:4px">'+
+    '<tr style="font-size:11px;color:var(--text-muted)"><th style="text-align:left;padding:3px">Hráč</th><th>Tým</th><th>Body</th><th>+/-</th><th>Postih</th></tr>'+
+    res.data.map(function(s){
+      var tag=s.postih?'<span class="tag-badge tag-'+s.postih+'">'+s.postih+'</span>':'—';
+      return '<tr style="border-top:.5px solid var(--border);font-size:12px">'+
+        '<td style="padding:4px;font-weight:500">'+esc(s.player_name)+'</td>'+
+        '<td style="padding:4px;text-align:center">'+s.team+'</td>'+
+        '<td style="padding:4px;text-align:center">'+s.body+'</td>'+
+        '<td style="padding:4px;text-align:center">'+(s.plus_minus>0?'+':'')+s.plus_minus+'</td>'+
+        '<td style="padding:4px;text-align:center">'+tag+'</td>'+
+        '</tr>';
+    }).join('')+'</table>';
+}
+
+async function smazatVysledek(matchId){
+  if(!confirm('Opravdu smazat výsledek? Tato akce je nevratná.')) return;
+  await sb.from('match_stats').delete().eq('match_id',matchId);
+  await sb.from('matches').delete().eq('id',matchId);
+  flash('Výsledek smazán.',true);
+  loadVysledkyList();
+  loadVysledekStatus();
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=false;btn.style.opacity='1';btn.textContent='💾 Uložit výsledek zápasu';}
+}
+
+function showSubTab(id, btn){
+  document.querySelectorAll('.sub-page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.sub-tab').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+}
+
+function lockAdmin(){
+  adminUnlocked=false;
+  document.getElementById('admin-pin-screen').style.display='block';
+  document.getElementById('admin-content').style.display='none';
+  document.getElementById('admin-pin').value='';
+  document.getElementById('pin-error').classList.remove('show');
+  showPage('pg-prihlaseni');
+}
+async function loadAdminData(){
+  await loadPlayers();
+  loadAdminPlayers(); loadMatchDatetime(); loadAdminAkce(); loadSekaPere(); loadPostihyForm(); loadVysledekStatus(); loadVysledkyList(); loadLosHistory();
+}
+async function loadMatchDatetime(){
+  var res=await sb.from('settings').select('key,value').in('key',['match_datetime','match_venue']);
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  if(cfg['match_datetime']){
+    document.getElementById('match-datetime').value=cfg['match_datetime'].slice(0,16);
+    updateResetInfo(cfg['match_datetime']);
+    var vd=document.getElementById('vysledek-datum');
+    if(vd&&!vd.value) vd.value=cfg['match_datetime'].slice(0,16);
+  }
+  if(cfg['match_venue']) document.getElementById('match-venue-sel').value=cfg['match_venue'];
+}
+function updateResetInfo(dt){
+  var r=new Date(new Date(dt).getTime()+4.5*60*60*1000);
+  document.getElementById('reset-info').textContent='Reset: '+r.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric'})+' '+r.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+}
+async function saveMatchDatetime(){
+  var val=document.getElementById('match-datetime').value;
+  var venue=document.getElementById('match-venue-sel').value;
+  if(!val){flash('Vyber datum a čas.',false);return;}
+  var dt=new Date(val);
+  var dayRaw=dt.toLocaleDateString('cs-CZ',{weekday:'long',day:'numeric',month:'numeric',year:'numeric'});
+  var day=dayRaw.charAt(0).toUpperCase()+dayRaw.slice(1);
+  var vikop=dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var sraz=new Date(dt.getTime()-30*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var los=new Date(dt.getTime()-60*60000).toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+  var label=day+'  ·  🎲 los '+los+'  ·  🤝 sraz '+sraz+'  ·  ⚽ výkop '+vikop;
+  await sb.from('settings').upsert({key:'match_datetime',value:val},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'match_label',value:label},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'match_venue',value:venue},{onConflict:'key'});
+  document.getElementById('match-label').textContent=label;
+  document.getElementById('match-venue').textContent=venue?'📍 '+venue:'';
+  var ll=document.getElementById('match-label-los');
+  var lv=document.getElementById('match-venue-los');
+  if(ll) ll.textContent=label;
+  if(lv) lv.textContent=venue?'📍 '+venue:'';
+  updateResetInfo(val); renderNextReset(val); flash('Uloženo.',true);
+}
+
+// ── SEKA/PERE ─────────────────────────────────────────────────
+async function loadSekaPere(){
+  var res=await sb.from('settings').select('key,value').in('key',['seka_pere','nahradnik1','nahradnik2']);
+  var cfg={}; (res.data||[]).forEach(r=>cfg[r.key]=r.value);
+  var opts='<option value="">— vyber —</option>'+playersList.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('');
+  ['seka-pere-sel','nahradnik1-sel','nahradnik2-sel'].forEach(function(id){
+    document.getElementById(id).innerHTML=opts;
+  });
+  var evSel=document.getElementById('evidence-hrac-sel');
+  if(evSel) evSel.innerHTML='<option value="">— vyber hráče —</option>'+playersList.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');
+  if(cfg['seka_pere']) document.getElementById('seka-pere-sel').value=cfg['seka_pere'];
+  if(cfg['nahradnik1']) document.getElementById('nahradnik1-sel').value=cfg['nahradnik1'];
+  if(cfg['nahradnik2']) document.getElementById('nahradnik2-sel').value=cfg['nahradnik2'];
+  loadEvidenceCounts();
+}
+async function saveSekaPere(){
+  var s=document.getElementById('seka-pere-sel').value;
+  var n1=document.getElementById('nahradnik1-sel').value;
+  var n2=document.getElementById('nahradnik2-sel').value;
+  await sb.from('settings').upsert({key:'seka_pere',value:s},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'nahradnik1',value:n1},{onConflict:'key'});
+  await sb.from('settings').upsert({key:'nahradnik2',value:n2},{onConflict:'key'});
+  flash('Seka/Pere uloženo.',true);
+}
+
+// ── VÝSLEDEK ZÁPASU ───────────────────────────────────────────
+var extraPlayers = [];
+
+async function onZapasChange(){
+  var sel=document.getElementById('vysledek-datum');
+  if(!sel||!sel.value) return;
+  // Najdi los který odpovídá vybranému datu
+  var losRes=await sb.from('los_history').select('*').eq('match_date',sel.value).single();
+  if(!losRes.data){
+    // Try by created_at
+    var losRes2=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(20);
+    if(losRes2.data){
+      var found=losRes2.data.find(function(h){return (h.match_date||h.created_at)===sel.value;});
+      if(found) currentLos=found;
+    }
+  } else {
+    currentLos=losRes.data;
+  }
+  loadVysledekStatus();
+  // Aktualizuj postihy hráčů
+  if(currentLos){
+    extraPlayers=[];
+    renderExtraPlayers();
+    var allPlayers=[...(currentLos.team_a||[]),...(currentLos.team_b||[])];
+    var list=document.getElementById('postihy-list');
+    list.innerHTML=allPlayers.map(function(name,i){
+      var team=i<(currentLos.team_a||[]).length?'1':'2';
+      return '<div class="vysledek-row">'+
+        '<span class="vname">'+esc(name)+'</span>'+
+        '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+team+'</span>'+
+        '<select class="postih-sel" id="postih-'+name.replace(/ /g,'_')+'">'+
+          '<option value="">—</option>'+
+          '<option value="a">postih a</option>'+
+          '<option value="b">postih b</option>'+
+          '<option value="c">postih c</option>'+
+        '</select></div>';
+    }).join('');
+  }
+}
+
+async function loadPostihyForm(){
+  // Naplň select zápasů z los_history
+  var losRes=await sb.from('los_history').select('id,match_date,created_at').order('created_at',{ascending:false}).limit(20);
+  var datSel=document.getElementById('vysledek-datum');
+  if(datSel&&losRes.data){
+    datSel.innerHTML='<option value="">— vyber zápas —</option>'+
+      losRes.data.map(function(h){
+        var dt=new Date(h.match_date||h.created_at);
+        var label=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
+        return '<option value="'+(h.match_date||h.created_at)+'">'+label+'</option>';
+      }).join('');
+    // Předvyber první datum bez výsledku
+    var matchesRes=await sb.from('matches').select('los_id');
+    var usedLosIds=(matchesRes.data||[]).map(function(m){return m.los_id;}).filter(Boolean);
+    var firstUnused=losRes.data.find(function(h){return !usedLosIds.includes(h.id);});
+    if(firstUnused){
+      datSel.value=firstUnused.match_date||firstUnused.created_at;
+    } else if(losRes.data.length){
+      datSel.value=losRes.data[0].match_date||losRes.data[0].created_at;
+    }
+  }
+
+  var res=await sb.from('los_history').select('*').order('created_at',{ascending:false}).limit(1);
+  var list=document.getElementById('postihy-list');
+  if(!res.data||!res.data.length){list.innerHTML='<div class="empty">Nejprve proveď losování.</div>';return;}
+  var last=res.data[0];
+  currentLos=last;
+  extraPlayers=[];
+  renderExtraPlayers();
+  var allPlayers=[...(last.team_a||[]),...(last.team_b||[])];
+  list.innerHTML=allPlayers.map(function(name,i){
+    var team=i<(last.team_a||[]).length?'1':'2';
+    return '<div class="vysledek-row">'+
+      '<span class="vname">'+esc(name)+'</span>'+
+      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+team+'</span>'+
+      '<select class="postih-sel" id="postih-'+name.replace(/ /g,'_')+'">'+
+        '<option value="">—</option>'+
+        '<option value="a">postih a</option>'+
+        '<option value="b">postih b</option>'+
+        '<option value="c">postih c</option>'+
+      '</select></div>';
+  }).join('');
+  // Naplň select extra hráčů (hráči co nejsou v losu)
+  var losPlayers=allPlayers;
+  var extraSel=document.getElementById('extra-player-sel');
+  if(extraSel){
+    extraSel.innerHTML='<option value="">— vyber hráče —</option>'+
+      playersList.filter(function(n){return !losPlayers.includes(n);})
+        .map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>';}).join('');
+  }
+}
+
+function pridatExtraHrace(){
+  var sel=document.getElementById('extra-player-sel');
+  var teamSel=document.getElementById('extra-team-sel');
+  var name=sel?sel.value:'';
+  var team=teamSel?teamSel.value:'1';
+  if(!name){flash('Vyber hráče.',false);return;}
+  if(extraPlayers.find(function(p){return p.name===name;})){flash('Hráč již přidán.',false);return;}
+  extraPlayers.push({name,team,postih:'b'});
+  sel.value='';
+  renderExtraPlayers();
+}
+
+function renderExtraPlayers(){
+  var el=document.getElementById('extra-players-list');
+  if(!el) return;
+  if(!extraPlayers.length){el.innerHTML='';return;}
+  el.innerHTML=extraPlayers.map(function(p,i){
+    return '<div class="vysledek-row" style="background:var(--orange-light,#fff3cd)">'+
+      '<span class="vname">'+esc(p.name)+'</span>'+
+      '<span style="font-size:11px;color:var(--text-muted);margin-right:6px">Team '+p.team+' · postih b</span>'+
+      '<button class="btn-rm" onclick="removeExtraHrac('+i+')">✕</button></div>';
+  }).join('');
+}
+
+function removeExtraHrac(i){
+  extraPlayers.splice(i,1);
+  renderExtraPlayers();
+}
+
+async function ulozitVysledek(){
+  if(!currentLos){flash('Nejprve proveď losování.',false);return;}
+  var skoreA=parseInt(document.getElementById('skore-a').value)||0;
+  var skoreB=parseInt(document.getElementById('skore-b').value)||0;
+  var matchDatum=document.getElementById('vysledek-datum').value||new Date().toISOString();
+  var losId=currentLos.id;
+
+  // Zkontroluj jestli výsledek pro tento los již existuje
+  var existing=await sb.from('matches').select('id').eq('los_id',losId).single();
+  if(existing.data){flash('Výsledek pro tento zápas již existuje. Použij tlačítko Upravit.',false);return;}
+
+  var teamA=currentLos.team_a||[], teamB=currentLos.team_b||[];
+
+  // Výsledek pro každý tým
+  var vysledekA=skoreA>skoreB?'w':skoreA===skoreB?'d':'l';
+  var vysledekB=skoreB>skoreA?'w':skoreA===skoreB?'d':'l';
+  var pmA=skoreA-skoreB, pmB=skoreB-skoreA;
+  var bodyVyhraA=vysledekA==='w'?3:vysledekA==='d'?2:1;
+  var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
+
+  // Ulož zápas
+  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
+  if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
+  var matchId=matchRes.data&&matchRes.data.id;
+
+  // Ulož statistiky hráčů
+  var stats=[];
+  function getPostih(name){return document.getElementById('postih-'+name.replace(/ /g,'_')+'')&&document.getElementById('postih-'+name.replace(/ /g,'_')+'').value||'';}
+
+  function calcBody(postih, body, vysledek){
+    if(postih==='a') return vysledek==='w'?2.5:vysledek==='d'?1.5:0.5;
+    if(postih==='b') return 0.25;
+    if(postih==='c') return -1;
+    return body;
+  }
+  function calcPM(postih, pm, porazenPM){
+    if(postih==='b'||postih==='c') return porazenPM;
+    return pm;
+  }
+
+  teamA.forEach(function(name){
+    var postih=getPostih(name);
+    var body=calcBody(postih,bodyVyhraA,vysledekA);
+    var pm=calcPM(postih,pmA,pmB);
+    stats.push({match_id:matchId,player_name:name,team:1,body,plus_minus:pm,postih:postih||null});
+  });
+  teamB.forEach(function(name){
+    var postih=getPostih(name);
+    var body=calcBody(postih,bodyVyhraB,vysledekB);
+    var pm=calcPM(postih,pmB,pmA);
+    stats.push({match_id:matchId,player_name:name,team:2,body,plus_minus:pm,postih:postih||null});
+  });
+  // Extra hráči s postihem b
+  extraPlayers.forEach(function(p){
+    var t=parseInt(p.team)||1;
+    var bodyExtra=0.25;
+    var pmExtra=t===1?pmB:pmA; // poražený tým pm
+    stats.push({match_id:matchId,player_name:p.name,team:t,body:bodyExtra,plus_minus:pmExtra,postih:'b'});
+  });
+
+  await sb.from('match_stats').insert(stats);
+  flash('Výsledek uložen! Skóre '+skoreA+':'+skoreB,true);
+  await sb.from('settings').upsert({key:'last_match_id',value:String(matchId)},{onConflict:'key'});
+  var btn=document.getElementById('btn-ulozit-vysledek');
+  if(btn){btn.disabled=true;btn.style.opacity='0.5';btn.textContent='✅ Výsledek uložen';}
+  loadVysledekStatus();
+  loadVysledkyList();
+}
+
+// ── ADMIN AKCE ────────────────────────────────────────────────
+async function adminSaveAkce(){
+  var nazev=document.getElementById('akce-nazev').value.trim();
+  var datum=document.getElementById('akce-datum').value;
+  var popis=document.getElementById('akce-popis').value.trim();
+  var editId=document.getElementById('akce-edit-id').value;
+  if(!nazev||!datum){flash('Vyplň název a datum akce.',false);return;}
+  if(editId){
+    var eid=parseInt(editId);
+    if(!eid){flash('Chyba: neplatné ID akce.',false);return;}
+    var upd=await sb.from('akce').update({nazev:nazev,datum:datum,popis:popis}).eq('id',eid);
+    if(upd.error){flash('Chyba při úpravě: '+upd.error.message,false);return;}
+    flash('Akce upravena!',true);
+  } else {
+    var ins=await sb.from('akce').insert({nazev:nazev,datum:datum,popis:popis});
+    if(ins.error){flash('Chyba: '+ins.error.message,false);return;}
+    flash('Akce přidána!',true);
+  }
+  adminCancelEditAkce();
+  loadAdminAkce();
+  loadAkce();
+}
+function editAkceById(id){
+  var row=document.getElementById('akce-row-'+id);
+  if(!row) return;
+  adminEditAkce(id, row.dataset.nazev.replace(/&quot;/g,'"'), row.dataset.datum, row.dataset.popis.replace(/&quot;/g,'"'));
 }
 function adminCancelEditAkce(){
   document.getElementById('akce-nazev').value='';
