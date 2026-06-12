@@ -680,7 +680,11 @@ function switchPoradiView(view){
   document.getElementById('btn-view-body').classList.toggle('active',view==='body');
 }
 
-function showHracModal(name, s, totalGames){
+function showHracModal(idx){
+  if(!window._poradiData) return;
+  var s=window._poradiData.arr[idx];
+  var totalGames=window._poradiData.totalGames;
+  var name=s.name;
   var ap=totalGames>0?(s.ucast/totalGames*100).toFixed(0):0;
   var bodySkrt=skrtSoucet(s.bodyList);
   var pmSkrt=skrtSoucet(s.pmList);
@@ -743,11 +747,14 @@ async function renderPoradi(){
   arr.forEach(function(s,i){if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
   var total=arr.length;
 
+  // Uložit data globálně pro modal
+  window._poradiData={arr:arr, totalGames:totalGames};
+
   // View: Žebříček
-  document.getElementById('poradi-body-zebricek').innerHTML=arr.map(function(s){
+  document.getElementById('poradi-body-zebricek').innerHTML=arr.map(function(s,i){
     var rc=rowClass(s.rank,total);
     var rb='<span class="rank-badge '+(s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn')+'">'+s.rank+'</span>';
-    return '<tr class="'+rc+'" onclick="showHracModal(''+esc(s.name)+'','+JSON.stringify({ucast:s.ucast,body:s.body,plus_minus:s.plus_minus,vyhry:s.vyhry,remisy:s.remisy,prohry:s.prohry,bodyList:s.bodyList,pmList:s.pmList})+','+totalGames+')" style="cursor:pointer">'+
+    return '<tr class="'+rc+'" onclick="showHracModal('+i+')" style="cursor:pointer">'+
       '<td>'+rb+'</td><td>'+esc(s.name)+'</td>'+
       '<td><strong>'+s.soucet+'</strong></td>'+
       '<td>'+s.zebUcast+'</td>'+
@@ -756,16 +763,17 @@ async function renderPoradi(){
     '</tr>';
   }).join('');
 
-  // View: Body (seřazeno podle skutečných bodů)
+  // View: Body
   var arrBody=[...arr].sort((a,b)=>b.body-a.body);
   var fr2=1;
   arrBody.forEach(function(s,i){if(i>0&&s.body===arrBody[i-1].body)s.rankBody=arrBody[i-1].rankBody;else s.rankBody=fr2;fr2++;});
-  document.getElementById('poradi-body-body').innerHTML=arrBody.map(function(s){
+  document.getElementById('poradi-body-body').innerHTML=arrBody.map(function(s,i){
+    var origIdx=arr.indexOf(s);
     var rc=rowClass(s.rankBody,total);
     var rb='<span class="rank-badge '+(s.rankBody===1?'r1':s.rankBody===2?'r2':s.rankBody===3?'r3':'rn')+'">'+s.rankBody+'</span>';
     var ap=totalGames>0&&s.ucast/totalGames>0.6;
     var pm=s.plus_minus;
-    return '<tr class="'+rc+'" onclick="showHracModal(''+esc(s.name)+'','+JSON.stringify({ucast:s.ucast,body:s.body,plus_minus:s.plus_minus,vyhry:s.vyhry,remisy:s.remisy,prohry:s.prohry,bodyList:s.bodyList,pmList:s.pmList})+','+totalGames+')" style="cursor:pointer">'+
+    return '<tr class="'+rc+'" onclick="showHracModal('+origIdx+')" style="cursor:pointer">'+
       '<td>'+rb+'</td><td>'+esc(s.name)+'</td>'+
       '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td>'+
       '<td><strong>'+s.body.toFixed(1)+'</strong></td>'+
