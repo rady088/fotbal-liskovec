@@ -1866,8 +1866,10 @@ async function adminRemovePlayer(name){
 async function adminReset(){
   if(!confirm('Opravdu resetovat všechna přihlášení?')) return;
   await sb.from('rsvp').delete().neq('player_name','___x___');
-  flash('Přihlášení resetována.',true);
+  await sb.from('los_history').delete().neq('id',0);
+  flash('Přihlášení a los resetovány.',true);
   await loadRsvp();
+  await loadLosResult();
 }
 
 // ── LOS ALGORITMUS ────────────────────────────────────────────
@@ -1992,7 +1994,7 @@ function renderLos(tA,tB,lm,saved,adminView){
     if(publicEl){
       publicEl.innerHTML=sekaHtml+
         '<div class="card">'+
-        '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Aktuální los':'🎲 Návrh losu')+'</div>'+
+        '<div class="section-label" style="margin-bottom:10px">'+(saved?'✅ Los — '+(document.getElementById('match-label').textContent.split('·')[0].trim()||'aktuální'):'🎲 Návrh losu')+'</div>'+
         publicTeamsHtml+'</div>';
     }
 
