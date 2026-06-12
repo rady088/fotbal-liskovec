@@ -1240,7 +1240,6 @@ async function respond(going){
   document.getElementById('player-new').value='';
   await loadPlayers(); await loadRsvp();
 }
-sb.channel('rsvp').on('postgres_changes',{event:'*',schema:'public',table:'rsvp'},loadRsvp).subscribe();
 
 // ── POŘADÍ ────────────────────────────────────────────────────
 async function loadStats(){
