@@ -233,20 +233,53 @@
 
   <!-- POŘADÍ -->
   <div id="pg-poradi" class="page">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:.5px solid var(--border)">
-      <table class="standings-table" style="min-width:480px">
-        <thead><tr>
-          <th style="width:36px">#</th><th>Hráč</th>
-          <th title="Součet pořadí ve 3 žebříčcích">Součet ①</th>
-          <th title="Žebříček účast">Zeb.Účast ②</th>
-          <th title="Žebříček body">Zeb.Body ③</th>
-          <th title="Žebříček +/-">Zeb.+/- ④</th>
-          <th title="Účast > 60%">Účast</th>
-        </tr></thead>
-        <tbody id="poradi-body"><tr><td colspan="7" class="loading">Načítám…</td></tr></tbody>
-      </table>
+    <!-- Přepínač -->
+    <div style="display:flex;gap:6px;margin-bottom:1rem">
+      <button id="btn-view-zebricek" class="sub-tab active" onclick="switchPoradiView('zebricek')" style="flex:1;text-align:center">🏆 Žebříček</button>
+      <button id="btn-view-body" class="sub-tab" onclick="switchPoradiView('body')" style="flex:1;text-align:center">📊 Body</button>
     </div>
-    <p style="font-size:12px;color:var(--text-muted);padding:.25rem;margin-top:6px">Pořadí se zobrazuje od 3. zápasu. Nižší součet = lepší. ← přejeď pro více →</p>
+    <!-- Žebříček view -->
+    <div id="poradi-view-zebricek">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:.5px solid var(--border)">
+        <table class="standings-table" style="min-width:360px">
+          <thead><tr>
+            <th style="width:36px">#</th>
+            <th>Hráč</th>
+            <th title="Součet pořadí ve 3 žebříčcích">Součet</th>
+            <th title="Žebříček účasti">Účast</th>
+            <th title="Žebříček bodů (škrtá se 1 nejlepší a 1 nejhorší)">Body</th>
+            <th title="Žebříček +/- (škrtá se 1 nejlepší a 1 nejhorší)">+/-</th>
+          </tr></thead>
+          <tbody id="poradi-body-zebricek"><tr><td colspan="6" class="loading">Načítám…</td></tr></tbody>
+        </table>
+      </div>
+      <p style="font-size:11px;color:var(--text-muted);padding:.25rem;margin-top:6px">Nižší součet = lepší. U bodů a +/- se škrtá nejlepší a nejhorší výsledek. Zobrazuje se od 3. zápasu.</p>
+    </div>
+    <!-- Body view -->
+    <div id="poradi-view-body" style="display:none">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:.5px solid var(--border)">
+        <table class="standings-table" style="min-width:380px">
+          <thead><tr>
+            <th style="width:36px">#</th>
+            <th>Hráč</th>
+            <th title="Počet zápasů">Účast</th>
+            <th title="Součet bodů">Body</th>
+            <th title="Součet plus/minus">+/-</th>
+            <th title="Účast > 60%">%</th>
+          </tr></thead>
+          <tbody id="poradi-body-body"><tr><td colspan="6" class="loading">Načítám…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- Modal hráče -->
+    <div id="hrac-modal-overlay" onclick="closeHracModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300"></div>
+    <div id="hrac-modal" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:1.25rem;z-index:400;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div id="hrac-modal-name" style="font-size:18px;font-weight:700"></div>
+        <button onclick="closeHracModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">✕</button>
+      </div>
+      <div id="hrac-modal-content"></div>
+    </div>
   </div>
 
   <!-- AKCE -->
@@ -604,13 +637,20 @@ async function loadStats(){
   if(!res.data||!res.data.length) return {};
   var agg={};
   res.data.forEach(function(r){
-    if(!agg[r.player_name]) agg[r.player_name]={ucast:0,body:0,plus_minus:0};
-    agg[r.player_name].ucast++;
-    agg[r.player_name].body+=(r.body||0);
-    agg[r.player_name].plus_minus+=(r.plus_minus||0);
+    var pn=r.player_name;
+    if(!agg[pn]) agg[pn]={ucast:0,body:0,plus_minus:0,vyhry:0,remisy:0,prohry:0,bodyList:[],pmList:[]};
+    agg[pn].ucast++;
+    agg[pn].body+=(r.body||0);
+    agg[pn].plus_minus+=(r.plus_minus||0);
+    agg[pn].bodyList.push(r.body||0);
+    agg[pn].pmList.push(r.plus_minus||0);
+    if(r.body>=3) agg[pn].vyhry++;
+    else if(r.body>=2) agg[pn].remisy++;
+    else if(r.body>=0.1) agg[pn].prohry++;
   });
   return agg;
 }
+
 function rankArr(arr,fn,asc){
   var s=[...arr].sort((a,b)=>asc?fn(a)-fn(b):fn(b)-fn(a));
   var r=1; s.forEach(function(x,i){if(i>0&&fn(s[i])===fn(s[i-1]))x._r=s[i-1]._r;else x._r=r;r++;});
@@ -622,28 +662,119 @@ function rowClass(rank,total){
   if(rank>=total-Math.floor(total*.2)) return 'row-red';
   return 'row-lgreen';
 }
+
+// Škrtání: odeber 1 nejlepší a 1 nejhorší ze seznamu, vrať součet
+function skrtSoucet(list){
+  if(list.length<=2) return list.reduce(function(a,b){return a+b;},0);
+  var sorted=[...list].sort(function(a,b){return a-b;});
+  sorted.shift(); sorted.pop(); // odeber nejhorší a nejlepší
+  return sorted.reduce(function(a,b){return a+b;},0);
+}
+
+var currentPoradiView='zebricek';
+function switchPoradiView(view){
+  currentPoradiView=view;
+  document.getElementById('poradi-view-zebricek').style.display=view==='zebricek'?'block':'none';
+  document.getElementById('poradi-view-body').style.display=view==='body'?'block':'none';
+  document.getElementById('btn-view-zebricek').classList.toggle('active',view==='zebricek');
+  document.getElementById('btn-view-body').classList.toggle('active',view==='body');
+}
+
+function showHracModal(name, s, totalGames){
+  var ap=totalGames>0?(s.ucast/totalGames*100).toFixed(0):0;
+  var bodySkrt=skrtSoucet(s.bodyList);
+  var pmSkrt=skrtSoucet(s.pmList);
+  document.getElementById('hrac-modal-name').textContent=name;
+  document.getElementById('hrac-modal-content').innerHTML=
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem">'+
+      statBox('Účast',''+s.ucast+' / '+totalGames)+
+      statBox('Účast %',ap+'%',parseInt(ap)>=60?'var(--green)':'var(--red)')+
+      statBox('Výhry',''+s.vyhry,'var(--green)')+
+      statBox('Remízy',''+s.remisy,'#f39c12')+
+      statBox('Prohry',''+s.prohry,'var(--red)')+
+      statBox('Body (celkem)',s.body.toFixed(1))+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+      statBox('Body (po škrtnutí)',bodySkrt.toFixed(1),'var(--green)')+
+      statBox('+/- (po škrtnutí)',(pmSkrt>0?'+':'')+pmSkrt,pmSkrt>=0?'var(--green)':'var(--red)')+
+      statBox('+/- celkem',(s.plus_minus>0?'+':'')+s.plus_minus)+
+      statBox('Průměr bodů',(s.ucast>0?s.body/s.ucast:0).toFixed(2))+
+    '</div>';
+  document.getElementById('hrac-modal-overlay').style.display='block';
+  document.getElementById('hrac-modal').style.display='block';
+}
+function statBox(label,val,color){
+  return '<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;text-align:center">'+
+    '<div style="font-size:'+(val.length>5?'16':'20')+'px;font-weight:700;color:'+(color||'var(--text)')+'">'+val+'</div>'+
+    '<div style="font-size:11px;color:var(--text-muted);margin-top:3px">'+label+'</div>'+
+  '</div>';
+}
+function closeHracModal(){
+  document.getElementById('hrac-modal-overlay').style.display='none';
+  document.getElementById('hrac-modal').style.display='none';
+}
+
 async function renderPoradi(){
   var stats=await loadStats();
   var arr=Object.entries(stats).map(function(e){return Object.assign({name:e[0]},e[1]);});
-  if(!arr.length){document.getElementById('poradi-body').innerHTML='<tr><td colspan="7" class="empty">Žádná data.</td></tr>';return;}
   var tg=await sb.from('matches').select('*',{count:'exact',head:true});
   var totalGames=tg.count||0;
+
+  if(!arr.length||totalGames<3){
+    var msg='<tr><td colspan="6" class="empty">'+(totalGames<3?'Pořadí se zobrazuje od 3. zápasu (odehráno: '+totalGames+')':'Žádná data.')+'</td></tr>';
+    document.getElementById('poradi-body-zebricek').innerHTML=msg;
+    document.getElementById('poradi-body-body').innerHTML=msg;
+    return;
+  }
+
+  // Škrtání pro body a +/-
+  arr.forEach(function(s){
+    s.bodySkrt=skrtSoucet(s.bodyList);
+    s.pmSkrt=skrtSoucet(s.pmList);
+  });
+
+  // Žebříčky
   rankArr(arr,function(s){return s.ucast;},false).forEach(function(s){s.zebUcast=s._r;});
-  rankArr(arr,function(s){return s.body;},false).forEach(function(s){s.zebBody=s._r;});
-  rankArr(arr,function(s){return s.plus_minus;},false).forEach(function(s){s.zebPM=s._r;});
+  rankArr(arr,function(s){return s.bodySkrt;},false).forEach(function(s){s.zebBody=s._r;});
+  rankArr(arr,function(s){return s.pmSkrt;},false).forEach(function(s){s.zebPM=s._r;});
   arr.forEach(function(s){s.soucet=(s.zebUcast||0)+(s.zebBody||0)+(s.zebPM||0);});
   arr.sort((a,b)=>a.soucet-b.soucet);
   var fr=1;
   arr.forEach(function(s,i){if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
   var total=arr.length;
-  document.getElementById('poradi-body').innerHTML=arr.map(function(s){
+
+  // View: Žebříček
+  document.getElementById('poradi-body-zebricek').innerHTML=arr.map(function(s){
     var rc=rowClass(s.rank,total);
     var rb='<span class="rank-badge '+(s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn')+'">'+s.rank+'</span>';
+    return '<tr class="'+rc+'" onclick="showHracModal(''+esc(s.name)+'','+JSON.stringify({ucast:s.ucast,body:s.body,plus_minus:s.plus_minus,vyhry:s.vyhry,remisy:s.remisy,prohry:s.prohry,bodyList:s.bodyList,pmList:s.pmList})+','+totalGames+')" style="cursor:pointer">'+
+      '<td>'+rb+'</td><td>'+esc(s.name)+'</td>'+
+      '<td><strong>'+s.soucet+'</strong></td>'+
+      '<td>'+s.zebUcast+'</td>'+
+      '<td>'+s.zebBody+'</td>'+
+      '<td>'+s.zebPM+'</td>'+
+    '</tr>';
+  }).join('');
+
+  // View: Body (seřazeno podle skutečných bodů)
+  var arrBody=[...arr].sort((a,b)=>b.body-a.body);
+  var fr2=1;
+  arrBody.forEach(function(s,i){if(i>0&&s.body===arrBody[i-1].body)s.rankBody=arrBody[i-1].rankBody;else s.rankBody=fr2;fr2++;});
+  document.getElementById('poradi-body-body').innerHTML=arrBody.map(function(s){
+    var rc=rowClass(s.rankBody,total);
+    var rb='<span class="rank-badge '+(s.rankBody===1?'r1':s.rankBody===2?'r2':s.rankBody===3?'r3':'rn')+'">'+s.rankBody+'</span>';
     var ap=totalGames>0&&s.ucast/totalGames>0.6;
-    return '<tr class="'+rc+'"><td>'+rb+'</td><td>'+esc(s.name)+'</td><td><strong>'+s.soucet+'</strong></td><td>'+(s.zebUcast||'—')+'</td><td>'+(s.zebBody||'—')+'</td><td>'+(s.zebPM||'—')+'</td>'+
-      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td></tr>';
+    var pm=s.plus_minus;
+    return '<tr class="'+rc+'" onclick="showHracModal(''+esc(s.name)+'','+JSON.stringify({ucast:s.ucast,body:s.body,plus_minus:s.plus_minus,vyhry:s.vyhry,remisy:s.remisy,prohry:s.prohry,bodyList:s.bodyList,pmList:s.pmList})+','+totalGames+')" style="cursor:pointer">'+
+      '<td>'+rb+'</td><td>'+esc(s.name)+'</td>'+
+      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td>'+
+      '<td><strong>'+s.body.toFixed(1)+'</strong></td>'+
+      '<td style="color:'+(pm>=0?'var(--green)':'var(--red)')+'">'+(pm>0?'+':'')+pm+'</td>'+
+      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+Math.round(s.ucast/totalGames*100)+'%</td>'+
+    '</tr>';
   }).join('');
 }
+
 
 // ── AKCE ──────────────────────────────────────────────────────
 async function loadAkce(){
