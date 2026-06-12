@@ -1217,7 +1217,7 @@ async function ulozitVysledek(){
   var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
 
   // Ulož zápas
-  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
+  var matchRes=await sb.from('matches').insert({match_date:matchDatum,score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
   if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
   var matchId=matchRes.data&&matchRes.data.id;
 
@@ -1398,28 +1398,6 @@ function rowClass(rank,total){
   if(rank<=Math.ceil(total*.25)) return 'row-orange';
   if(rank>=total-Math.floor(total*.2)) return 'row-red';
   return 'row-lgreen';
-}
-async function renderPoradi(){
-  var stats=await loadStats();
-  var arr=Object.entries(stats).map(function(e){return Object.assign({name:e[0]},e[1]);});
-  if(!arr.length){document.getElementById('poradi-body').innerHTML='<tr><td colspan="7" class="empty">Žádná data.</td></tr>';return;}
-  var tg=await sb.from('matches').select('*',{count:'exact',head:true});
-  var totalGames=tg.count||0;
-  rankArr(arr,function(s){return s.ucast;},false).forEach(function(s){s.zebUcast=s._r;});
-  rankArr(arr,function(s){return s.body;},false).forEach(function(s){s.zebBody=s._r;});
-  rankArr(arr,function(s){return s.plus_minus;},false).forEach(function(s){s.zebPM=s._r;});
-  arr.forEach(function(s){s.soucet=(s.zebUcast||0)+(s.zebBody||0)+(s.zebPM||0);});
-  arr.sort((a,b)=>a.soucet-b.soucet);
-  var fr=1;
-  arr.forEach(function(s,i){if(i>0&&s.soucet===arr[i-1].soucet)s.rank=arr[i-1].rank;else s.rank=fr;fr++;});
-  var total=arr.length;
-  document.getElementById('poradi-body').innerHTML=arr.map(function(s){
-    var rc=rowClass(s.rank,total);
-    var rb='<span class="rank-badge '+(s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rn')+'">'+s.rank+'</span>';
-    var ap=totalGames>0&&s.ucast/totalGames>0.6;
-    return '<tr class="'+rc+'"><td>'+rb+'</td><td>'+esc(s.name)+'</td><td><strong>'+s.soucet+'</strong></td><td>'+(s.zebUcast||'—')+'</td><td>'+(s.zebBody||'—')+'</td><td>'+(s.zebPM||'—')+'</td>'+
-      '<td style="color:'+(ap?'var(--green)':'var(--red)')+'">'+s.ucast+'</td></tr>';
-  }).join('');
 }
 
 // ── AKCE ──────────────────────────────────────────────────────
@@ -1852,7 +1830,7 @@ async function ulozitVysledek(){
   var bodyVyhraB=vysledekB==='w'?3:vysledekB==='d'?2:1;
 
   // Ulož zápas
-  var matchRes=await sb.from('matches').insert({match_date:new Date(matchDatum).toISOString(),score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
+  var matchRes=await sb.from('matches').insert({match_date:matchDatum,score_t1:skoreA,score_t2:skoreB,los_id:losId}).select('id').single();
   if(matchRes.error){flash('Chyba ukládání zápasu: '+matchRes.error.message,false);return;}
   var matchId=matchRes.data&&matchRes.data.id;
 
