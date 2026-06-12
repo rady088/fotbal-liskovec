@@ -56,6 +56,7 @@
     .match-card .mdt{color:#fff;font-size:20px;font-weight:700;line-height:1.3;margin-bottom:4px}
     .match-card .mvn{color:rgba(255,255,255,.7);font-size:13px}
     .section-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+    .admin-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:12px;padding-bottom:8px;border-bottom:.5px solid var(--border);display:flex;align-items:center;gap:6px}
     select,input[type="text"],input[type="password"],input[type="datetime-local"],input[type="number"],textarea{
       width:100%;padding:14px;border:.5px solid var(--border);border-radius:var(--radius-sm);
       background:var(--surface);color:var(--text);font-size:16px;font-family:inherit;margin-bottom:14px;appearance:none}
@@ -69,6 +70,8 @@
     .btn-primary:hover{background:var(--green-dark)}
     .btn-outline{width:100%;padding:11px;background:var(--surface);color:var(--green);border:1.5px solid var(--green);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer}
     .btn-sm{padding:7px 12px;background:var(--surface);color:var(--text);border:.5px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;white-space:nowrap}
+    .btn-sm-green{background:var(--green-light);color:var(--green);border-color:var(--green);font-weight:600}
+    .btn-sm-green:hover{background:var(--green);color:#fff}
     .btn-sm:hover{background:var(--green-light);color:var(--green)}
     .btn-danger{width:100%;padding:11px;background:var(--red-light);color:var(--red);border:.5px solid rgba(192,57,43,.2);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer}
     .flash{border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:1rem;display:none}
@@ -314,20 +317,20 @@
       <div id="sub-zapas" class="sub-page active">
         <!-- Zápas -->
       <div class="card">
-        <div class="section-label">Zápas</div>
+        <div class="admin-title">Zápas</div>
         <input type="datetime-local" id="match-datetime" style="margin-bottom:6px"/>
         <div class="section-label" style="margin-top:2px">Místo</div>
         <select id="match-venue-sel" style="margin-bottom:6px">
           <option value="Hřiště v Lískovci">Hřiště v Lískovci</option>
           <option value="Tělocvična Horničák">Tělocvična Horničák</option>
         </select>
-        <button class="btn-sm" style="width:100%;margin-bottom:6px" onclick="saveMatchDatetime()">Uložit zápas</button>
+        <button class="btn-primary" style="margin-bottom:6px" onclick="saveMatchDatetime()">Uložit zápas</button>
         <div class="info-box" id="reset-info">Reset přihlášení proběhne 4,5 h po zápase.</div>
       </div>
 
         <!-- Seka/Pere -->
       <div class="card">
-        <div class="section-label">Seka / Pere</div>
+        <div class="admin-title">Seka / Pere</div>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Kdo je zodpovědný za praní dresů a sekání hřiště.</p>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
           <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Seka/Pere</div>
@@ -339,7 +342,7 @@
           <div style="flex:1"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Náhradník 2</div>
           <select id="nahradnik2-sel" style="margin-bottom:0"><option value="">— vyber —</option></select></div>
         </div>
-        <button class="btn-sm" style="width:100%;margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit</button>
+        <button class="btn-primary" style="margin-top:8px;margin-bottom:14px" onclick="saveSekaPere()">Uložit Seka/Pere</button>
       </div>
 
       
@@ -348,7 +351,7 @@
         <div class="section-label" style="margin-bottom:10px">Losování</div>
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Rozdělí přihlášené hráče do 2 vyvážených týmů podle levelů, počtu hráčů v levelových skupinách a rotace párů.</p>
         <button class="btn-primary" onclick="spustLos()">🎲 Losovat týmy</button>
-        <button class="btn-outline" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
+        <button class="btn-primary" id="btn-save-los" style="display:none;margin-top:8px" onclick="saveLos()">💾 Uložit výsledek losu</button>
         <div id="los-draft-area" style="margin-top:12px"></div>
         <div class="admin-divider"></div>
         <div class="section-label" style="margin-bottom:8px">Historie losování</div>
@@ -369,7 +372,7 @@
       <div id="sub-vysledky" class="sub-page">
         <!-- Výsledek zápasu -->
       <div class="card">
-        <div class="section-label">Zadat výsledek zápasu</div>
+        <div class="admin-title">Zadat výsledek zápasu</div>
         <div id="vysledek-status" style="display:none;background:var(--green-light);color:var(--green);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
           <span id="vysledek-status-text"></span>
           <button class="btn-sm" onclick="editVysledek()" style="font-size:12px">✏️ Upravit</button>
@@ -399,7 +402,7 @@
             <option value="1">Team 1</option>
             <option value="2">Team 2</option>
           </select>
-          <button class="btn-sm" onclick="pridatExtraHrace()">+ Přidat</button>
+          <button class="btn-sm btn-sm-green" onclick="pridatExtraHrace()">+ Přidat</button>
         </div>
         <div id="extra-players-list"></div>
         <div style="margin-top:12px">
@@ -423,7 +426,7 @@
               <option value="seka">Sekání</option>
               <option value="prani">Praní</option>
             </select>
-            <button class="btn-sm" onclick="pridatEvidenci()">+ Přidat</button>
+            <button class="btn-sm btn-sm-green" onclick="pridatEvidenci()">+ Přidat</button>
           </div>
           <div class="section-label" style="margin-bottom:6px">Počty za sezónu</div>
           <div id="evidence-list"><div class="loading">Načítám…</div></div>
@@ -434,11 +437,11 @@
       <div id="sub-hraci" class="sub-page">
         <!-- Hráči -->
       <div class="card">
-        <div class="section-label">Přidat hráče</div>
+        <div class="admin-title">Přidat hráče</div>
         <div class="add-row">
           <input type="text" id="new-player-input" placeholder="Jméno…" style="margin-bottom:0" onkeydown="if(event.key==='Enter')adminAddPlayer()"/>
           <input type="number" id="new-player-level" placeholder="Lvl" min="0" max="10" step="0.5" class="sm"/>
-          <button class="btn-sm" onclick="adminAddPlayer()">+ Přidat</button>
+          <button class="btn-sm btn-sm-green" onclick="adminAddPlayer()">+ Přidat</button>
         </div>
         <div class="section-label" style="margin-bottom:6px">Hráči & levely</div>
         <div id="admin-players-list"><div class="loading">Načítám…</div></div>
