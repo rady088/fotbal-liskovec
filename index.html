@@ -1975,10 +1975,6 @@ async function adminRemovePlayer(name){
 async function adminReset(){
   if(!confirm('Opravdu resetovat přihlášení a aktuální los?')) return;
   await sb.from('rsvp').delete().neq('player_name','___x___');
-  var lastLos=await sb.from('los_history').select('id').order('created_at',{ascending:false}).limit(1);
-  if(lastLos.data&&lastLos.data.length){
-    await sb.from('los_history').delete().eq('id',lastLos.data[0].id);
-  }
   await sb.from('settings').upsert({key:'los_reset',value:'1'},{onConflict:'key'});
   var btn=document.getElementById('btn-save-los');
   if(btn) btn.style.display='none';
