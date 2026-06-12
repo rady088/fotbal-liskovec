@@ -763,6 +763,7 @@ async function loadVysledekStatus(){
 
 async function editVysledek(){
   if(!currentLos){flash('Nejprve vyber zápas.',false);return;}
+  if(!confirm('Opravdu upravit výsledek? Stávající záznam bude smazán.')) return;
   var mCheck=await sb.from('matches').select('id').eq('los_id',currentLos.id).single();
   if(!mCheck.data){flash('Žádný uložený výsledek pro tento zápas.',false);return;}
   var matchId=parseInt(mCheck.data.id);
@@ -836,6 +837,7 @@ async function toggleStats(matchId){
 }
 
 async function smazatVysledek(matchId){
+  if(!confirm('Opravdu smazat výsledek? Tato akce je nevratná.')) return;
   await sb.from('match_stats').delete().eq('match_id',matchId);
   await sb.from('matches').delete().eq('id',matchId);
   flash('Výsledek smazán.',true);
@@ -1154,6 +1156,7 @@ function adminEditAkce(id,nazev,datum,popis){
   window.scrollTo(0,0);
 }
 async function adminDeleteAkce(id,nazev){
+  if(!confirm('Smazat akci "'+nazev+'"?')) return;
   await sb.from('akce').delete().eq('id',id);
   flash('Akce "'+nazev+'" smazána.',true);
   loadAdminAkce();
@@ -1196,11 +1199,13 @@ async function adminAddPlayer(){
   await loadAdminPlayers(); await loadPlayers();
 }
 async function adminRemovePlayer(name){
+  if(!confirm('Odebrat hráče "'+name+'"?')) return;
   await sb.from('players').delete().eq('name',name);
   flash(name+' odebrán.',true);
   await loadAdminPlayers(); await loadPlayers(); await loadRsvp();
 }
 async function adminReset(){
+  if(!confirm('Opravdu resetovat všechna přihlášení?')) return;
   await sb.from('rsvp').delete().neq('player_name','___x___');
   flash('Přihlášení resetována.',true);
   await loadRsvp();
