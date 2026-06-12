@@ -724,12 +724,15 @@ async function renderPoradi(){
   var tg=await sb.from('matches').select('*',{count:'exact',head:true});
   var totalGames=tg.count||0;
 
-  if(!arr.length||totalGames<3){
-    var msg='<tr><td colspan="6" class="empty">'+(totalGames<3?'Pořadí se zobrazuje od 3. zápasu (odehráno: '+totalGames+')':'Žádná data.')+'</td></tr>';
+  if(!arr.length){
+    var msg='<tr><td colspan="6" class="empty">Žádná data — nejsou uloženy žádné výsledky.</td></tr>';
     document.getElementById('poradi-body-zebricek').innerHTML=msg;
     document.getElementById('poradi-body-body').innerHTML=msg;
     return;
   }
+  // Poznámka pod tabulkou o škrtání (platí od 3 zápasů)
+  var noteEl=document.querySelector('#poradi-view-zebricek p');
+  if(noteEl&&totalGames<3) noteEl.textContent='Odehráno: '+totalGames+'/3 zápasů. Škrtání nejlepšího a nejhoršího výsledku se aktivuje od 3. zápasu.';
 
   // Škrtání pro body a +/-
   arr.forEach(function(s){
