@@ -1126,7 +1126,8 @@ async function loadPostihyForm(){
   if(datSel&&losRes.data){
     datSel.innerHTML='<option value="">— vyber zápas —</option>'+
       losRes.data.map(function(h){
-        var dt=new Date(h.match_date||h.created_at);
+        var raw=h.match_date||h.created_at;
+        var dt=raw&&raw.length>=16?parseDateLocal(raw):new Date(raw);
         var label=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
         return '<option value="'+(h.match_date||h.created_at)+'">'+label+'</option>';
       }).join('');
@@ -1743,7 +1744,8 @@ async function loadPostihyForm(){
   if(datSel&&losRes.data){
     datSel.innerHTML='<option value="">— vyber zápas —</option>'+
       losRes.data.map(function(h){
-        var dt=new Date(h.match_date||h.created_at);
+        var raw=h.match_date||h.created_at;
+        var dt=raw&&raw.length>=16?parseDateLocal(raw):new Date(raw);
         var label=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
         return '<option value="'+(h.match_date||h.created_at)+'">'+label+'</option>';
       }).join('');
@@ -2185,7 +2187,8 @@ async function loadLosHistory(){
   var el=document.getElementById('los-history');
   if(!res.data||!res.data.length){el.innerHTML='<div class="empty">Žádná historie</div>';return;}
   el.innerHTML=res.data.map(function(h){
-    var dt=new Date(h.match_date||h.created_at);
+    var raw=h.match_date||h.created_at;
+    var dt=raw&&raw.length>=16?parseDateLocal(raw):new Date(raw);
     var d=dt.toLocaleDateString('cs-CZ',{weekday:'short',day:'numeric',month:'numeric',year:'numeric'})+' '+dt.toLocaleTimeString('cs-CZ',{hour:'2-digit',minute:'2-digit'});
     return '<div class="hist-row" style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">>'+
       '<div style="flex:1">'+
@@ -2230,7 +2233,15 @@ async function sdiletLos(){
   }
 }
 
-// ── HELPERS ───────────────────────────────────────────────────
+// ── HELPERS
+function parseDateLocal(str){
+  // Parsuje "YYYY-MM-DDTHH:MM..." jako lokální čas (bez UTC konverze)
+  var s=str.slice(0,16); // "YYYY-MM-DDTHH:MM"
+  var p=s.split('T');
+  var d=p[0].split('-');
+  var t=(p[1]||'00:00').split(':');
+  return new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1]);
+} ───────────────────────────────────────────────────
 function flash(msg,ok){
   var el=document.getElementById('flash');
   el.textContent=msg; el.className='flash show '+(ok?'ok':'err');
